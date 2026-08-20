@@ -43,6 +43,10 @@ export function DigestReader(props: Props) {
   const digestMinutes = minutes(countWords(markdown));
   const threadMinutes = minutes(threadWords);
 
+  // Sections arriving mid-stream open themselves; there is nothing to hide yet
+  // and collapsing them as they land would be a moving target.
+  const isOpen = (index: number) => (streaming ? true : open.has(index));
+
   const toggle = (index: number) => {
     const next = new Set(open);
     if (next.has(index)) {
@@ -58,9 +62,8 @@ export function DigestReader(props: Props) {
     setOpen(expand ? new Set(parsed.sections.map((_, index) => index)) : new Set());
   };
 
-  // While tokens are still arriving the outline is half-built, so fall back to
-  // plain rendering until the run settles.
-  if (streaming || parsed.sections.length === 0) {
+  // A model that ignores the format still has to render.
+  if (parsed.sections.length === 0) {
     return (
       <Markdown source={markdown} citations={citations} onJump={(id) => jumpToComment(id)} />
     );
@@ -79,21 +82,27 @@ export function DigestReader(props: Props) {
         ) : null}
 
         <div className="digest-meta">
-          <Tooltip label="Reading this digest versus reading every comment yourself">
+          {streaming ? (
             <span>
-              {digestMinutes} min here · {threadMinutes} min in the thread
+              {parsed.sections.length} {parsed.sections.length === 1 ? "point" : "points"} so far…
             </span>
-          </Tooltip>
-          <span className="dot">·</span>
-          <span>{parsed.sections.length} points</span>
+          ) : (
+            <>
+              <Tooltip label="Reading this digest versus reading every comment yourself">
+                <span>
+                  {digestMinutes} min here · {threadMinutes} min in the thread
+                </span>
+              </Tooltip>
+              <span className="dot">·</span>
+              <span>{parsed.sections.length} points</span>
+            </>
+          )}
           <div className="spacer" />
-          <button
-            type="button"
-            className="ghost-button"
-            onClick={() => setEvery(!allOpen)}
-          >
-            {allOpen ? "Collapse all" : "Expand all"}
-          </button>
+          {streaming ? null : (
+            <button type="button" className="ghost-button" onClick={() => setEvery(!allOpen)}>
+              {allOpen ? "Collapse all" : "Expand all"}
+            </button>
+          )}
         </div>
       </div>
 
@@ -105,13 +114,14 @@ export function DigestReader(props: Props) {
 
       <ol className="digest-sections">
         {parsed.sections.map((section, index) => {
-          const isOpen = open.has(index);
+          const expanded = isOpen(index);
           return (
-            <li key={index} className={`digest-section ${isOpen ? "open" : ""}`}>
+            <li key={index} className={`digest-section ${expanded ? "open" : ""}`}>
               <button
                 type="button"
                 className="digest-head"
-                aria-expanded={isOpen}
+                aria-expanded={expanded}
+                disabled={streaming}
                 onClick={() => toggle(index)}
               >
                 <span className="digest-index">{index + 1}</span>
@@ -129,7 +139,7 @@ export function DigestReader(props: Props) {
                 </span>
               </button>
 
-              {isOpen && section.body ? (
+              {expanded && section.body ? (
                 <div className="digest-body" data-selection-source="digest">
                   <Markdown
                     source={section.body}

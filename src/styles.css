@@ -1644,6 +1644,11 @@ button.link:hover,
   opacity: 0.7;
 }
 
+.sources-count {
+  cursor: default;
+  border-bottom: 1px dotted var(--line);
+}
+
 .level-note {
   margin: 18px 0 0;
   font-size: 12px;
@@ -2497,6 +2502,10 @@ button.link:hover,
 
 .digest-section.open {
   background: var(--panel-2);
+}
+
+.digest-head:disabled {
+  cursor: default;
 }
 
 .digest-head {

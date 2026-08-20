@@ -100,6 +100,8 @@ interface AppState {
   presets: Preset[];
   prefetch: PrefetchMode;
   prefetching: boolean;
+  /// A run is scheduled but the delay has not elapsed yet.
+  prefetchPending: boolean;
   readLevel: ReadLevel;
   providerStatus: ProviderStatus | null;
   rateLimit: RateLimit | null;
@@ -286,6 +288,7 @@ export const useApp = create<AppState>((set, get) => ({
   presets: DEFAULT_PRESETS,
   prefetch: "rundown",
   prefetching: false,
+  prefetchPending: false,
   readLevel: "skim",
   providerStatus: null,
   rateLimit: null,
@@ -400,11 +403,17 @@ export const useApp = create<AppState>((set, get) => ({
     const readIds = new Set(get().readIds);
     readIds.add(id);
 
-    // Abandon any speculative work for the story being left behind.
+    // Abandon any work for the story being left behind — all of it, not just
+    // the speculative rundown.
     window.clearTimeout(prefetchTimer);
-    const leaving = get().outputs.rundown;
-    if (leaving.streaming && leaving.runId) {
-      api.cancelRun(leaving.runId).catch(() => undefined);
+    const leaving = get();
+    for (const output of Object.values(leaving.outputs)) {
+      if (output.streaming && output.runId) {
+        api.cancelRun(output.runId).catch(() => undefined);
+      }
+    }
+    if (leaving.chatBusy && leaving.chatRunId) {
+      api.cancelRun(leaving.chatRunId).catch(() => undefined);
     }
 
     set({
@@ -427,6 +436,7 @@ export const useApp = create<AppState>((set, get) => ({
       chatError: null,
       selection: null,
       prefetching: false,
+      prefetchPending: false,
       commentQuery: "",
       matchIds: [],
       matchIndex: 0,
@@ -520,22 +530,33 @@ export const useApp = create<AppState>((set, get) => ({
 
   schedulePrefetch: (id) => {
     window.clearTimeout(prefetchTimer);
-    if (get().prefetch === "off") {
+    set({ prefetchPending: false });
+
+    const start = get();
+    if (start.prefetch === "off" || !start.thread) {
       return;
     }
+    // Decide now whether a run is actually coming, so the tab can say so
+    // instead of offering a button for work that is already scheduled.
+    if (start.outputs.rundown.text || start.outputs.rundown.streaming) {
+      return;
+    }
+    if (start.thread.comment_count < 5) {
+      return;
+    }
+    set({ prefetchPending: true });
+
     prefetchTimer = window.setTimeout(async () => {
       const state = get();
       if (state.selectedId !== id || !state.thread) {
+        set({ prefetchPending: false });
         return;
       }
-      // Nothing to gain if it is already generated, running, or trivial.
       if (state.outputs.rundown.text || state.outputs.rundown.streaming) {
+        set({ prefetchPending: false });
         return;
       }
-      if (state.thread.comment_count < 5) {
-        return;
-      }
-      set({ prefetching: true });
+      set({ prefetching: true, prefetchPending: false });
       await get().runOutput("rundown");
 
       // The digest is a second, separate run, so it only happens on request.
@@ -626,15 +647,29 @@ export const useApp = create<AppState>((set, get) => ({
       return;
     }
 
+    if (kind === "rundown") {
+      window.clearTimeout(prefetchTimer);
+    }
+
     const runId = newRunId();
     set((current) => ({
       outputs: {
         ...current.outputs,
         [kind]: { ...emptyOutput(), streaming: true, runId },
       },
+      prefetchPending: kind === "rundown" ? false : current.prefetchPending,
     }));
 
+    // A run outlives the story that started it: cancelling is asynchronous, and
+    // tokens already in flight still arrive. Without this guard they land in
+    // whichever story happens to be open, which shows one thread's digest under
+    // another thread's title.
+    const stillHere = () => get().selectedId === storyId;
+
     const patch = (next: Partial<OutputState>) => {
+      if (!stillHere()) {
+        return;
+      }
       set((current) => ({
         outputs: { ...current.outputs, [kind]: { ...current.outputs[kind], ...next } },
       }));
@@ -642,6 +677,9 @@ export const useApp = create<AppState>((set, get) => ({
 
     trackRun(runId, {
       onDelta: (text) => {
+        if (!stillHere()) {
+          return;
+        }
         set((current) => ({
           outputs: {
             ...current.outputs,
@@ -727,11 +765,19 @@ export const useApp = create<AppState>((set, get) => ({
       chatOpen: true,
     });
 
+    const stillHere = () => get().selectedId === storyId;
+
     trackRun(runId, {
       onDelta: (text) => {
+        if (!stillHere()) {
+          return;
+        }
         set((current) => ({ chatStreaming: current.chatStreaming + text }));
       },
       onDone: (payload) => {
+        if (!stillHere()) {
+          return;
+        }
         set((current) => ({
           chatBusy: false,
           chatRunId: null,
@@ -749,6 +795,9 @@ export const useApp = create<AppState>((set, get) => ({
         }));
       },
       onError: (message) => {
+        if (!stillHere()) {
+          return;
+        }
         set({ chatBusy: false, chatRunId: null, chatStreaming: "", chatError: message });
       },
     });
@@ -765,6 +814,9 @@ export const useApp = create<AppState>((set, get) => ({
         selectionSource: selection?.source ?? null,
       })
       .catch((err) => {
+        if (!stillHere()) {
+          return;
+        }
         set({ chatBusy: false, chatRunId: null, chatStreaming: "", chatError: String(err) });
       });
   },
@@ -859,6 +911,7 @@ export const useApp = create<AppState>((set, get) => ({
     set({ prefetch: mode });
     if (mode === "off") {
       window.clearTimeout(prefetchTimer);
+      set({ prefetchPending: false });
     }
     await api.settingsSet("prefetch", mode).catch(() => undefined);
   },

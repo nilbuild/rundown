@@ -3,6 +3,7 @@ import { useApp } from "../state/app";
 import { Markdown } from "./Markdown";
 import { OutputSkeleton } from "./Skeleton";
 import { ErrorState } from "./ErrorState";
+import { Tooltip } from "./ui/Tooltip";
 import { countWords, mergeSourceRuns, minutes, renderLevel } from "../lib/digest";
 import { formatDuration } from "../lib/format";
 import type { ReadLevel } from "../lib/types";
@@ -32,8 +33,10 @@ const LEVELS: { key: ReadLevel; label: string; hint: string }[] = [
 
 export function RundownView() {
   const output = useApp((state) => state.outputs.rundown);
+  const thread = useApp((state) => state.thread);
   const coverage = useApp((state) => state.coverage);
   const prefetching = useApp((state) => state.prefetching);
+  const prefetchPending = useApp((state) => state.prefetchPending);
   const runOutput = useApp((state) => state.runOutput);
   const stopOutput = useApp((state) => state.stopOutput);
   const readLevel = useApp((state) => state.readLevel);
@@ -44,7 +47,7 @@ export function RundownView() {
     [output.text, readLevel],
   );
   const body = useMemo(() => mergeSourceRuns(levelled), [levelled]);
-  const sourceCount = useMemo(() => countSources(levelled), [levelled]);
+  const sourceCount = useMemo(() => countSources(output.text), [output.text]);
 
   // Each level's cost, measured rather than guessed, so the choice is informed.
   const levelTimes = useMemo(() => {
@@ -55,14 +58,38 @@ export function RundownView() {
   const partial = coverage && coverage.included < coverage.total;
   const report = output.report;
 
+  // A run is already scheduled, so offering a button to start one reads as
+  // though nothing is going to happen.
+  if (!output.text && !output.streaming && !output.error && prefetchPending) {
+    return (
+      <div className="output rundown">
+        <div className="output-toolbar">
+          <span className="pulse" />
+          <span className="muted">Starting the briefing…</span>
+          <div className="spacer" />
+          <button
+            type="button"
+            className="ghost-button"
+            onClick={() => runOutput("rundown", true)}
+          >
+            Start now
+          </button>
+        </div>
+        <article className="rundown-body">
+          <OutputSkeleton />
+        </article>
+      </div>
+    );
+  }
+
   if (!output.text && !output.streaming && !output.error) {
     return (
       <div className="empty-state">
         <h2>What's the story here?</h2>
         <p>
           One account of the subject, merging the article with what the thread knows, in plain
-          words. Sources sit in footnotes you can hover, so you only open the thread when you
-          want to.
+          words. Each claim carries a small marker — hover it to read the comment behind the
+          claim, so you only open the thread when you want to.
         </p>
         <button type="button" className="primary-button" onClick={() => runOutput("rundown")}>
           Write it up
@@ -118,7 +145,17 @@ export function RundownView() {
               ))}
             </div>
             {sourceCount > 0 ? (
-              <span className="muted">{sourceCount} sources</span>
+              <Tooltip
+                label={
+                  thread
+                    ? `This briefing draws on ${sourceCount} of the thread's ${thread.comment_count} comments. Point at a marker to read one.`
+                    : "Point at a marker to read the comment behind a claim."
+                }
+              >
+                <span className="muted sources-count">
+                  cites {sourceCount} {sourceCount === 1 ? "comment" : "comments"}
+                </span>
+              </Tooltip>
             ) : null}
             {report && report.problems > 0 ? (
               <span className="verify bad">{report.problems} sources not in this thread</span>
