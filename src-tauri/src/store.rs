@@ -32,6 +32,39 @@ pub struct ChatMessage {
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
+pub struct LibraryHit {
+    pub story_id: u64,
+    pub title: String,
+    /// "thread" | "article" | "rundown" | "digest" | "brief" | "chat"
+    pub kind: String,
+    /// The matched text with the query terms marked by <b> tags.
+    pub snippet: String,
+    pub created_at: i64,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct HistoryEntry {
+    pub story_id: u64,
+    pub title: String,
+    pub read_at: i64,
+    pub comment_count: u32,
+    /// Which outputs already exist for this story.
+    pub kinds: Vec<String>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct Synthesis {
+    pub id: i64,
+    pub title: String,
+    pub story_ids: Vec<u64>,
+    pub markdown: String,
+    pub created_at: i64,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
 pub struct CachedOutput {
     pub markdown: String,
     pub provider: String,
@@ -222,6 +255,189 @@ impl Store {
         })
     }
 
+    // -- library ---------------------------------------------------------------
+
+    /// Index one piece of text for later recall. Called wherever something is
+    /// cached, so the corpus builds itself as you read rather than needing you
+    /// to file anything.
+    pub fn library_put(
+        &self,
+        story_id: u64,
+        title: &str,
+        kind: &str,
+        body: &str,
+    ) -> Result<()> {
+        if body.trim().is_empty() {
+            return Ok(());
+        }
+        self.with(|conn| {
+            // One row per story per kind, replaced on each write.
+            conn.execute(
+                "DELETE FROM library WHERE story_id = ?1 AND kind = ?2",
+                params![story_id as i64, kind],
+            )?;
+            conn.execute(
+                "INSERT INTO library (story_id, title, kind, body, created_at)
+                 VALUES (?1, ?2, ?3, ?4, ?5)",
+                params![story_id as i64, title, kind, body, now()],
+            )?;
+            Ok(())
+        })
+    }
+
+    pub fn cache_rows(&self, bucket: &str) -> Result<Vec<(String, String)>> {
+        self.with(|conn| {
+            let mut stmt = conn.prepare("SELECT key, value FROM cache WHERE bucket = ?1")?;
+            let rows = stmt.query_map(params![bucket], |row| Ok((row.get(0)?, row.get(1)?)))?;
+            Ok(rows.filter_map(|row| row.ok()).collect())
+        })
+    }
+
+    pub fn output_rows(&self) -> Result<Vec<(u64, String, String)>> {
+        self.with(|conn| {
+            let mut stmt = conn.prepare("SELECT story_id, kind, markdown FROM outputs")?;
+            let rows = stmt.query_map([], |row| {
+                Ok((row.get::<_, i64>(0)? as u64, row.get(1)?, row.get(2)?))
+            })?;
+            Ok(rows.filter_map(|row| row.ok()).collect())
+        })
+    }
+
+    /// Each conversation flattened into one searchable body.
+    pub fn chat_rows(&self) -> Result<Vec<(String, String)>> {
+        self.with(|conn| {
+            let mut stmt = conn.prepare(
+                "SELECT chat_id, group_concat(role || ': ' || content, char(10) || char(10))
+                 FROM (SELECT chat_id, role, content FROM messages ORDER BY id ASC)
+                 GROUP BY chat_id",
+            )?;
+            let rows = stmt.query_map([], |row| Ok((row.get(0)?, row.get(1)?)))?;
+            Ok(rows.filter_map(|row| row.ok()).collect())
+        })
+    }
+
+    pub fn library_search(&self, query: &str, limit: usize) -> Result<Vec<LibraryHit>> {
+        let trimmed = query.trim();
+        if trimmed.len() < 2 {
+            return Ok(Vec::new());
+        }
+        // FTS5 treats plenty of punctuation as syntax, so the query is quoted
+        // and used as a phrase with a trailing prefix match on the last word.
+        let escaped = trimmed.replace('"', "\"\"");
+        let expression = format!("\"{escaped}\"*");
+
+        self.with(|conn| {
+            let mut stmt = conn.prepare(
+                "SELECT story_id, title, kind, snippet(library, 3, '<b>', '</b>', '…', 18), created_at
+                 FROM library
+                 WHERE library MATCH ?1
+                 ORDER BY bm25(library), created_at DESC
+                 LIMIT ?2",
+            )?;
+            let rows = stmt.query_map(params![expression, limit as i64], |row| {
+                Ok(LibraryHit {
+                    story_id: row.get::<_, i64>(0)? as u64,
+                    title: row.get(1)?,
+                    kind: row.get(2)?,
+                    snippet: row.get(3)?,
+                    created_at: row.get(4)?,
+                })
+            })?;
+            Ok(rows.filter_map(|row| row.ok()).collect())
+        })
+    }
+
+    pub fn library_size(&self) -> Result<(usize, usize)> {
+        self.with(|conn| {
+            let entries: i64 = conn.query_row("SELECT count(*) FROM library", [], |r| r.get(0))?;
+            let stories: i64 =
+                conn.query_row("SELECT count(DISTINCT story_id) FROM library", [], |r| r.get(0))?;
+            Ok((entries.max(0) as usize, stories.max(0) as usize))
+        })
+    }
+
+    // -- reading history -------------------------------------------------------
+
+    /// What you have opened, newest first, with the titles and generated output
+    /// already on hand. The Library can only answer "find X" without this; this
+    /// is what answers "what did I read this week".
+    pub fn reading_history(&self, limit: usize) -> Result<Vec<HistoryEntry>> {
+        self.with(|conn| {
+            let mut stmt = conn.prepare(
+                "SELECT r.story_id,
+                        COALESCE((SELECT l.title FROM library l
+                                  WHERE l.story_id = r.story_id AND l.kind = 'thread'), ''),
+                        r.read_at,
+                        r.comment_count,
+                        COALESCE((SELECT group_concat(o.kind) FROM outputs o
+                                  WHERE o.story_id = r.story_id), '')
+                 FROM read_state r
+                 ORDER BY r.read_at DESC
+                 LIMIT ?1",
+            )?;
+            let rows = stmt.query_map(params![limit as i64], |row| {
+                let kinds: String = row.get(4)?;
+                Ok(HistoryEntry {
+                    story_id: row.get::<_, i64>(0)? as u64,
+                    title: row.get(1)?,
+                    read_at: row.get(2)?,
+                    comment_count: row.get::<_, i64>(3)?.max(0) as u32,
+                    kinds: kinds
+                        .split(',')
+                        .filter(|k| !k.is_empty())
+                        .map(str::to_string)
+                        .collect(),
+                })
+            })?;
+            Ok(rows.filter_map(|row| row.ok()).collect())
+        })
+    }
+
+    // -- synthesis -------------------------------------------------------------
+
+    pub fn synthesis_put(&self, title: &str, story_ids: &[u64], markdown: &str) -> Result<i64> {
+        let ids = story_ids
+            .iter()
+            .map(|id| id.to_string())
+            .collect::<Vec<_>>()
+            .join(",");
+        self.with(|conn| {
+            conn.execute(
+                "INSERT INTO syntheses (title, story_ids, markdown, created_at)
+                 VALUES (?1, ?2, ?3, ?4)",
+                params![title, ids, markdown, now()],
+            )?;
+            Ok(conn.last_insert_rowid())
+        })
+    }
+
+    pub fn synthesis_list(&self) -> Result<Vec<Synthesis>> {
+        self.with(|conn| {
+            let mut stmt = conn.prepare(
+                "SELECT id, title, story_ids, markdown, created_at
+                 FROM syntheses ORDER BY created_at DESC LIMIT 50",
+            )?;
+            let rows = stmt.query_map([], |row| {
+                let ids: String = row.get(2)?;
+                Ok(Synthesis {
+                    id: row.get(0)?,
+                    title: row.get(1)?,
+                    story_ids: ids.split(',').filter_map(|i| i.parse().ok()).collect(),
+                    markdown: row.get(3)?,
+                    created_at: row.get(4)?,
+                })
+            })?;
+            Ok(rows.filter_map(|row| row.ok()).collect())
+        })
+    }
+
+    pub fn synthesis_delete(&self, id: i64) -> Result<()> {
+        self.with(|conn| {
+            conn.execute("DELETE FROM syntheses WHERE id = ?1", params![id])?;
+            Ok(())
+        })
+    }
+
     // -- read state ----------------------------------------------------------
 
     /// Record a visit and report how many comments the thread had last time,
@@ -245,6 +461,25 @@ impl Store {
             )?;
 
             Ok(previous.map(|(count, read_at)| (count.max(0) as u32, read_at)))
+        })
+    }
+
+    /// The most recently opened stories, with the comment count they had at the
+    /// time, newest first.
+    pub fn recent_reads(&self, limit: usize) -> Result<Vec<(u64, u32, i64)>> {
+        self.with(|conn| {
+            let mut stmt = conn.prepare(
+                "SELECT story_id, comment_count, read_at FROM read_state
+                 ORDER BY read_at DESC LIMIT ?1",
+            )?;
+            let rows = stmt.query_map(params![limit as i64], |row| {
+                Ok((
+                    row.get::<_, i64>(0)? as u64,
+                    row.get::<_, i64>(1)?.max(0) as u32,
+                    row.get::<_, i64>(2)?,
+                ))
+            })?;
+            Ok(rows.filter_map(|row| row.ok()).collect())
         })
     }
 
@@ -343,5 +578,23 @@ CREATE TABLE IF NOT EXISTS read_state (
 CREATE TABLE IF NOT EXISTS settings (
   key   TEXT PRIMARY KEY,
   value TEXT NOT NULL
+);
+
+-- Everything you have read, searchable. `title` and `body` are indexed;
+-- `story_id`, `kind` and `created_at` are carried along unindexed.
+CREATE TABLE IF NOT EXISTS syntheses (
+  id         INTEGER PRIMARY KEY AUTOINCREMENT,
+  title      TEXT NOT NULL,
+  story_ids  TEXT NOT NULL,
+  markdown   TEXT NOT NULL,
+  created_at INTEGER NOT NULL
+);
+
+CREATE VIRTUAL TABLE IF NOT EXISTS library USING fts5(
+  story_id UNINDEXED,
+  title,
+  kind UNINDEXED,
+  body,
+  created_at UNINDEXED
 );
 "#;

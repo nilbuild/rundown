@@ -18,6 +18,10 @@ pub struct Article {
     /// Set when the page could not be reduced to an article body — a PDF, a
     /// video page, a login wall. The UI shows this instead of pretending.
     pub note: Option<String>,
+    /// True when readability failed and this is the whole page's text instead
+    /// of a clean article body. Worth reading, worth saying so.
+    #[serde(default)]
+    pub degraded: bool,
 }
 
 const MAX_BYTES: usize = 6 * 1024 * 1024;
@@ -79,14 +83,11 @@ pub async fn extract(url: &str) -> Result<Article> {
         Err(err) => return Ok(unreadable(&final_url, format!("Could not parse page: {err}"))),
     };
 
+    // Readability looks for one dominant article body. Plenty of real pages do
+    // not have one, and giving up there throws away text the reader can use.
     let parsed = match readability.parse() {
         Ok(parsed) => parsed,
-        Err(err) => {
-            return Ok(unreadable(
-                &final_url,
-                format!("No article content found ({err})."),
-            ))
-        }
+        Err(_) => return Ok(whole_page(&html, &final_url)),
     };
 
     let cleaned = tidy_html(&parsed.content, &final_url);
@@ -103,11 +104,7 @@ pub async fn extract(url: &str) -> Result<Article> {
     let word_count = crate::text::word_count(&markdown);
 
     if word_count < 25 {
-        return Ok(unreadable(
-            &final_url,
-            "The page had almost no extractable text — it may be a video, an app, or paywalled."
-                .into(),
-        ));
+        return Ok(whole_page(&html, &final_url));
     }
 
     Ok(Article {
@@ -120,7 +117,57 @@ pub async fn extract(url: &str) -> Result<Article> {
         markdown,
         word_count,
         note: None,
+        degraded: false,
     })
+}
+
+/// Last resort when readability finds no article: convert the whole body, minus
+/// the furniture. Noisier than a clean extraction, but a noisy page beats an
+/// empty one, and the caller is told which it got.
+fn whole_page(html: &str, url: &str) -> Article {
+    let doc = Document::from(html);
+    doc.select("nav, header, footer, aside, script, style, noscript, svg, iframe, form")
+        .remove();
+
+    let title = doc
+        .select("title")
+        .first()
+        .text()
+        .trim()
+        .to_string();
+
+    let body = match doc.select("body").first().try_html() {
+        Some(html) => html.to_string(),
+        None => return unreadable(url, "The page has no body content.".into()),
+    };
+
+    let cleaned = tidy_html(&body, url);
+    let markdown = match htmd::convert(&cleaned) {
+        Ok(markdown) => tidy_markdown(&markdown),
+        Err(err) => return unreadable(url, format!("Could not convert the page to text ({err}).")),
+    };
+    let word_count = crate::text::word_count(&markdown);
+
+    if word_count < 25 {
+        return unreadable(
+            url,
+            "The page had almost no extractable text — it may be a video, an app, or paywalled."
+                .into(),
+        );
+    }
+
+    Article {
+        url: url.to_string(),
+        title,
+        byline: None,
+        site_name: crate::hn::domain_of(url),
+        excerpt: None,
+        published_time: None,
+        markdown,
+        word_count,
+        note: None,
+        degraded: true,
+    }
 }
 
 /// Normalise the extracted HTML before conversion.
@@ -198,6 +245,7 @@ fn unreadable(url: &str, note: String) -> Article {
         markdown: String::new(),
         word_count: 0,
         note: Some(note),
+        degraded: false,
     }
 }
 
@@ -344,6 +392,42 @@ mod tests {
         let html = r#"<p>Read <a href="/post">this post</a> now.</p>"#;
         let markdown = htmd::convert(&tidy_html(html, "https://example.com/x")).unwrap();
         assert!(markdown.contains("[this post](https://example.com/post)"), "{markdown}");
+    }
+
+    #[test]
+    fn a_page_with_no_single_article_body_still_yields_its_text() {
+        // Readability wants one dominant block. A page of equal-weight sections
+        // has none, and giving up there loses text the reader can use.
+        let sections: String = (0..6)
+            .map(|i| {
+                format!(
+                    "<section><h2>Part {i}</h2><p>{}</p></section>",
+                    "This sentence carries real content that a reader would want to keep. "
+                        .repeat(3)
+                )
+            })
+            .collect();
+        let html = format!(
+            "<html><head><title>Many parts</title></head><body><nav>skipnav</nav>{sections}<footer>skipfoot</footer></body></html>"
+        );
+
+        let article = whole_page(&html, "https://example.com/p");
+        assert!(article.degraded, "should be marked as a rough extraction");
+        assert!(article.note.is_none(), "it is readable, so no failure note");
+        assert!(article.word_count > 50, "got {} words", article.word_count);
+        assert_eq!(article.title, "Many parts");
+        assert!(!article.markdown.contains("skipnav"), "nav should be gone");
+        assert!(!article.markdown.contains("skipfoot"), "footer should be gone");
+    }
+
+    #[test]
+    fn a_page_with_no_text_is_reported_rather_than_faked() {
+        let article = whole_page(
+            "<html><head><title>App</title></head><body><div id=\"root\"></div></body></html>",
+            "https://example.com/app",
+        );
+        assert!(article.note.is_some());
+        assert_eq!(article.word_count, 0);
     }
 
     #[test]

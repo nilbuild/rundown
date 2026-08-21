@@ -6,14 +6,18 @@ import { ChatPane } from "./components/ChatPane";
 import { CommandPalette } from "./components/CommandPalette";
 import { Settings } from "./components/Settings";
 import { PresetsDialog } from "./components/PresetsDialog";
+import { Library } from "./components/Library";
+import { SynthesisView } from "./components/SynthesisView";
 import { SelectionPopover } from "./components/SelectionPopover";
 
 export default function App() {
   const bootstrap = useApp((state) => state.bootstrap);
   const chatOpen = useApp((state) => state.chatOpen);
+  const view = useApp((state) => state.view);
   const setPaletteOpen = useApp((state) => state.setPaletteOpen);
   const setSettingsOpen = useApp((state) => state.setSettingsOpen);
   const setPresetsOpen = useApp((state) => state.setPresetsOpen);
+  const setLibraryOpen = useApp((state) => state.setLibraryOpen);
   const setTab = useApp((state) => state.setTab);
   const setChatOpen = useApp((state) => state.setChatOpen);
   const runOutput = useApp((state) => state.runOutput);
@@ -38,6 +42,11 @@ export default function App() {
       if (event.key === ",") {
         event.preventDefault();
         setSettingsOpen(true);
+        return;
+      }
+      if (event.key === "l") {
+        event.preventDefault();
+        setLibraryOpen(true);
         return;
       }
       if (event.key === "p") {
@@ -70,17 +79,18 @@ export default function App() {
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [setPaletteOpen, setSettingsOpen, setPresetsOpen, setTab, setChatOpen, runOutput, reloadStory]);
+  }, [setPaletteOpen, setSettingsOpen, setPresetsOpen, setLibraryOpen, setTab, setChatOpen, runOutput, reloadStory]);
 
   return (
     <div className={`app ${chatOpen ? "with-chat" : ""}`}>
       <Sidebar />
-      <Reader />
+      {view === "synthesis" ? <SynthesisView /> : <Reader />}
       <ChatPane />
 
       <CommandPalette />
       <Settings />
       <PresetsDialog />
+      <Library />
       <SelectionPopover />
     </div>
   );

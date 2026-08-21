@@ -9,8 +9,13 @@ import type {
   OutputKind,
   Provider,
   ProviderStatus,
+  HistoryEntry,
+  LibraryHit,
+  LibraryStats,
+  Synthesis,
   Story,
   ThreadView,
+  Update,
 } from "./types";
 
 export function loadFeed(feed: FeedName, offset: number, limit: number) {
@@ -52,6 +57,43 @@ export function generate(args: GenerateArgs) {
 
 export function cachedOutput(storyId: number, kind: OutputKind) {
   return invoke<CachedOutput | null>("cached_output", { storyId, kind });
+}
+
+export function librarySearch(query: string) {
+  return invoke<LibraryHit[]>("library_search", { query });
+}
+
+export function libraryStats() {
+  return invoke<LibraryStats>("library_stats");
+}
+
+export function readingHistory() {
+  return invoke<HistoryEntry[]>("reading_history");
+}
+
+export interface SynthesiseArgs {
+  runId: string;
+  storyIds: number[];
+  provider: Provider;
+  model?: string | null;
+  instruction: string;
+  title?: string;
+}
+
+export function synthesise(args: SynthesiseArgs) {
+  return invoke<void>("synthesise", { args });
+}
+
+export function synthesisList() {
+  return invoke<Synthesis[]>("synthesis_list");
+}
+
+export function synthesisDelete(id: number) {
+  return invoke<void>("synthesis_delete", { id });
+}
+
+export function updates() {
+  return invoke<Update[]>("updates");
 }
 
 export function cachedKinds(storyId: number) {

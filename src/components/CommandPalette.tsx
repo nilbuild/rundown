@@ -18,6 +18,7 @@ export function CommandPalette() {
   const reloadStory = useApp((state) => state.reloadStory);
   const setSettingsOpen = useApp((state) => state.setSettingsOpen);
   const setPresetsOpen = useApp((state) => state.setPresetsOpen);
+  const setLibraryOpen = useApp((state) => state.setLibraryOpen);
   const setChatOpen = useApp((state) => state.setChatOpen);
   const resetChat = useApp((state) => state.resetChat);
   const collapseAll = useApp((state) => state.collapseAll);
@@ -61,6 +62,22 @@ export function CommandPalette() {
         label: prefetch === "off" ? "Generate rundowns early" : "Stop generating early",
         run: () => setPrefetch(prefetch === "off" ? "rundown" : "off"),
       },
+      {
+        id: "library",
+        label: "Search everything you have read",
+        hint: "⌘L",
+        run: () => setLibraryOpen(true),
+      },
+      {
+        id: "synthesis",
+        label: "Read several threads together",
+        run: () => useApp.getState().setView("synthesis"),
+      },
+      {
+        id: "moved",
+        label: "Feed: Moved — read stories with new comments",
+        run: () => setFeed("moved"),
+      },
       { id: "presets", label: "Presets", hint: "⌘P", run: () => setPresetsOpen(true) },
       { id: "settings", label: "Settings", hint: "⌘,", run: () => setSettingsOpen(true) },
     ];
@@ -94,6 +111,7 @@ export function CommandPalette() {
     reloadStory,
     setSettingsOpen,
     setPresetsOpen,
+    setLibraryOpen,
     setFeed,
   ]);
 

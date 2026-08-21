@@ -10,7 +10,7 @@ use ai::{Provider, Registry, RunSpec};
 use article::Article;
 use hn::{Story, Thread};
 use serde::{Deserialize, Serialize};
-use store::{CachedOutput, ChatMessage, Store};
+use store::{CachedOutput, ChatMessage, HistoryEntry, LibraryHit, Store, Synthesis};
 use tauri::{AppHandle, Manager, State};
 
 type Fallible<T> = Result<T, String>;
@@ -58,6 +58,21 @@ async fn resolve_thread(store: &Store, id: u64, refresh: bool) -> anyhow::Result
     if let Ok(raw) = serde_json::to_string(&thread) {
         let _ = store.cache_put("thread", &key, &raw);
     }
+
+    // The whole discussion, so a half-remembered comment is findable later.
+    let body = hn::flatten(&thread.comments)
+        .iter()
+        .map(|comment| {
+            format!(
+                "{}: {}",
+                comment.author.as_deref().unwrap_or("unknown"),
+                comment.text
+            )
+        })
+        .collect::<Vec<_>>()
+        .join("\n\n");
+    let _ = store.library_put(id, &thread.title, "thread", &body);
+
     Ok(thread)
 }
 
@@ -227,9 +242,176 @@ async fn run_generate(
         args.model.as_deref(),
         report_json.as_ref(),
     );
+    let _ = store.library_put(args.story_id, &thread.title, &args.kind, &outcome.text);
 
     ai::emit_done(app, &outcome, &args.run_id, report);
     Ok(())
+}
+
+#[tauri::command]
+fn reading_history(store: State<'_, Store>) -> Fallible<Vec<HistoryEntry>> {
+    store.reading_history(200).map_err(fail)
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct SynthesiseArgs {
+    run_id: String,
+    story_ids: Vec<u64>,
+    provider: Provider,
+    #[serde(default)]
+    model: Option<String>,
+    #[serde(default)]
+    instruction: String,
+    #[serde(default)]
+    title: String,
+}
+
+#[tauri::command]
+async fn synthesise(
+    app: AppHandle,
+    store: State<'_, Store>,
+    registry: State<'_, Registry>,
+    args: SynthesiseArgs,
+) -> Fallible<()> {
+    if let Err(err) = run_synthesis(&app, &store, &registry, &args).await {
+        report_failure(&app, &args.run_id, err);
+    }
+    Ok(())
+}
+
+async fn run_synthesis(
+    app: &AppHandle,
+    store: &Store,
+    registry: &State<'_, Registry>,
+    args: &SynthesiseArgs,
+) -> anyhow::Result<()> {
+    if args.story_ids.len() < 2 {
+        return Err(anyhow::anyhow!("Pick at least two stories to compare."));
+    }
+
+    // Each story gets an equal share, so adding a fifth thread narrows them all
+    // rather than silently dropping the last one.
+    let per_story = (260_000 / args.story_ids.len()).max(20_000);
+    let mut sources = Vec::new();
+
+    for id in &args.story_ids {
+        let thread = resolve_thread(store, *id, false).await?;
+        let article = match thread.url.as_deref() {
+            Some(url) => resolve_article(store, url, false).await.ok(),
+            None => None,
+        };
+
+        // A briefing already distilled this thread. Re-reading the raw comments
+        // would spend the budget to reach a worse version of the same thing.
+        let body = match store.output_get(*id, "rundown") {
+            Ok(Some(cached)) if !cached.markdown.trim().is_empty() => cached.markdown,
+            _ => prompts::pack(&thread, article.as_ref(), per_story),
+        };
+
+        sources.push(prompts::Source {
+            story_id: *id,
+            title: thread.title.clone(),
+            url: thread.url.clone(),
+            body,
+        });
+    }
+
+    let spec = RunSpec {
+        run_id: args.run_id.clone(),
+        provider: args.provider,
+        model: args.model.clone(),
+        system: prompts::synthesis_system(),
+        prompt: prompts::synthesis_prompt(&sources, &args.instruction),
+        resume: None,
+        persist: false,
+    };
+
+    let outcome = ai::run(app.clone(), registry.clone(), spec).await?;
+
+    let title = if args.title.trim().is_empty() {
+        sources
+            .iter()
+            .map(|source| source.title.as_str())
+            .collect::<Vec<_>>()
+            .join(" · ")
+    } else {
+        args.title.trim().to_string()
+    };
+    let _ = store.synthesis_put(&title, &args.story_ids, &outcome.text);
+
+    ai::emit_done(app, &outcome, &args.run_id, None);
+    Ok(())
+}
+
+#[tauri::command]
+fn synthesis_list(store: State<'_, Store>) -> Fallible<Vec<Synthesis>> {
+    store.synthesis_list().map_err(fail)
+}
+
+#[tauri::command]
+fn synthesis_delete(store: State<'_, Store>, id: i64) -> Fallible<()> {
+    store.synthesis_delete(id).map_err(fail)
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct LibraryStats {
+    entries: usize,
+    stories: usize,
+}
+
+#[tauri::command]
+fn library_search(store: State<'_, Store>, query: String) -> Fallible<Vec<LibraryHit>> {
+    store.library_search(&query, 60).map_err(fail)
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct Update {
+    story: Story,
+    new_comments: u32,
+    read_at: i64,
+}
+
+/// Stories you have already read that have gained comments since. This is the
+/// inventory that per-thread new-comment counts could not give you: what moved,
+/// without having to reopen each one to find out.
+#[tauri::command]
+async fn updates(store: State<'_, Store>) -> Fallible<Vec<Update>> {
+    let seen = store.recent_reads(40).map_err(fail)?;
+
+    let fetched = futures::future::join_all(
+        seen.iter().map(|(id, _, _)| hn::story(*id)),
+    )
+    .await;
+
+    let mut out: Vec<Update> = seen
+        .into_iter()
+        .zip(fetched)
+        .filter_map(|((_, count_when_read, read_at), story)| {
+            let story = story.ok()?;
+            let now = story.descendants.max(0) as u32;
+            let gained = now.saturating_sub(count_when_read);
+            if gained == 0 {
+                return None;
+            }
+            Some(Update {
+                story,
+                new_comments: gained,
+                read_at,
+            })
+        })
+        .collect();
+
+    out.sort_by(|a, b| b.new_comments.cmp(&a.new_comments));
+    Ok(out)
+}
+
+#[tauri::command]
+fn library_stats(store: State<'_, Store>) -> Fallible<LibraryStats> {
+    let (entries, stories) = store.library_size().map_err(fail)?;
+    Ok(LibraryStats { entries, stories })
 }
 
 #[tauri::command]
@@ -340,6 +522,19 @@ async fn run_chat(
     }
     let _ = store.chat_append(&args.chat_id, "assistant", &outcome.text);
 
+    if let Ok(history) = store.chat_history(&args.chat_id) {
+        let body = history
+            .iter()
+            .map(|message| format!("{}: {}", message.role, message.content))
+            .collect::<Vec<_>>()
+            .join("\n\n");
+        let title = resolve_thread(store, args.story_id, false)
+            .await
+            .map(|thread| thread.title)
+            .unwrap_or_default();
+        let _ = store.library_put(args.story_id, &title, "chat", &body);
+    }
+
     ai::emit_done(app, &outcome, &args.run_id, None);
     Ok(())
 }
@@ -394,6 +589,59 @@ fn data_location() -> String {
     store::data_dir().to_string_lossy().to_string()
 }
 
+/// The index fills as you read, which leaves it empty on the first run even
+/// though the cache is already full. This walks what is there once.
+fn backfill_library(store: &Store) {
+    let (entries, _) = match store.library_size() {
+        Ok(size) => size,
+        Err(_) => return,
+    };
+    if entries > 0 {
+        return;
+    }
+
+    let mut titles: std::collections::HashMap<u64, String> = std::collections::HashMap::new();
+
+    for (key, raw) in store.cache_rows("thread").unwrap_or_default() {
+        let id: u64 = match key.parse() {
+            Ok(id) => id,
+            Err(_) => continue,
+        };
+        let thread: Thread = match serde_json::from_str(&raw) {
+            Ok(thread) => thread,
+            Err(_) => continue,
+        };
+        titles.insert(id, thread.title.clone());
+
+        let body = hn::flatten(&thread.comments)
+            .iter()
+            .map(|comment| {
+                format!(
+                    "{}: {}",
+                    comment.author.as_deref().unwrap_or("unknown"),
+                    comment.text
+                )
+            })
+            .collect::<Vec<_>>()
+            .join("\n\n");
+        let _ = store.library_put(id, &thread.title, "thread", &body);
+    }
+
+    for (story_id, kind, markdown) in store.output_rows().unwrap_or_default() {
+        let title = titles.get(&story_id).cloned().unwrap_or_default();
+        let _ = store.library_put(story_id, &title, &kind, &markdown);
+    }
+
+    for (chat_id, body) in store.chat_rows().unwrap_or_default() {
+        let story_id: u64 = match chat_id.strip_prefix("story:").and_then(|id| id.parse().ok()) {
+            Some(id) => id,
+            None => continue,
+        };
+        let title = titles.get(&story_id).cloned().unwrap_or_default();
+        let _ = store.library_put(story_id, &title, "chat", &body);
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -402,6 +650,7 @@ pub fn run() {
         .manage(Registry::default())
         .setup(|app| {
             let store = Store::open()?;
+            backfill_library(&store);
             app.manage(store);
             Ok(())
         })
@@ -422,6 +671,13 @@ pub fn run() {
             generate,
             cached_output,
             cached_kinds,
+            library_search,
+            library_stats,
+            updates,
+            reading_history,
+            synthesise,
+            synthesis_list,
+            synthesis_delete,
             chat_send,
             chat_history,
             chat_clear,

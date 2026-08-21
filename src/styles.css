@@ -2040,6 +2040,268 @@ button.link:hover,
   background: var(--line-soft);
 }
 
+/* -------------------------------------------------------------- library */
+
+.library {
+  width: 620px;
+  padding: 0;
+  max-height: 70vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.library-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--line);
+  color: var(--muted);
+  flex-shrink: 0;
+}
+
+.library-search input {
+  flex: 1;
+  border: none;
+  background: none;
+  font-size: 14px;
+  outline: none;
+}
+
+.library-results {
+  overflow-y: auto;
+  padding: 6px;
+}
+
+.library-hint {
+  padding: 18px 14px;
+  margin: 0;
+  line-height: 1.55;
+}
+
+.library-hit {
+  display: block;
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  text-align: left;
+}
+
+.library-hit:hover {
+  background: var(--line-soft);
+}
+
+.library-hit-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 4px;
+  font-size: 11.5px;
+}
+
+.library-kind {
+  flex-shrink: 0;
+  padding: 1px 7px;
+  border-radius: 5px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 10px;
+  font-weight: 650;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.library-title {
+  flex: 1;
+  min-width: 0;
+  font-weight: 550;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.library-snippet {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--muted);
+}
+
+.library-snippet mark {
+  background: none;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.moved-count {
+  color: var(--good);
+  font-weight: 550;
+}
+
+/* ---------------------------------------------- library browse, synthesis */
+
+.library-day {
+  padding: 4px 0 10px;
+}
+
+.library-day h3 {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 10px 0 4px;
+  padding: 0 12px;
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.library-day h3 .muted {
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+  font-size: 11px;
+}
+
+.library-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 12px 2px 10px;
+  border-radius: 7px;
+}
+
+.library-row:hover {
+  background: var(--line-soft);
+}
+
+.library-row.picked {
+  background: var(--accent-soft);
+}
+
+.library-row-open {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+  padding: 6px 0;
+  text-align: left;
+}
+
+.library-row-title {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.library-flag {
+  flex-shrink: 0;
+  padding: 0 6px;
+  border-radius: 4px;
+  background: var(--line-soft);
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 15px;
+}
+
+.library-foot {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-top: 1px solid var(--line);
+  font-size: 12px;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+
+.synthesis-body {
+  max-width: 700px;
+}
+
+.synthesis-again {
+  display: flex;
+  gap: 8px;
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line-soft);
+}
+
+.synthesis-again input {
+  flex: 1;
+  height: 30px;
+  padding: 0 11px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  font-size: 12.5px;
+  outline: none;
+}
+
+.synthesis-again input:focus {
+  border-color: var(--accent);
+}
+
+.synthesis-past {
+  margin-top: 44px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line-soft);
+}
+
+.synthesis-past h2 {
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0 0 10px;
+}
+
+.synthesis-past ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.synthesis-past li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 6px;
+  border-radius: 8px;
+}
+
+.synthesis-past li:hover {
+  background: var(--line-soft);
+}
+
+.synthesis-past li.active {
+  background: var(--accent-soft);
+}
+
+.synthesis-past-open {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+  padding: 8px 0;
+  text-align: left;
+}
+
+.synthesis-past-title {
+  font-size: 12.5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* --------------------------------------------------------------- dialog */
 
 .ui-backdrop {

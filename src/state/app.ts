@@ -17,11 +17,13 @@ import type {
   ReadLevel,
   Preset,
   Story,
+  Synthesis,
   Thread,
   VerifyReport,
 } from "../lib/types";
 
 export type Tab = "rundown" | "article" | "comments" | "digest";
+export type View = "reader" | "synthesis";
 
 export interface OutputState {
   text: string;
@@ -56,6 +58,8 @@ interface AppState {
   searchQuery: string;
   searching: boolean;
   readIds: Set<number>;
+  /// New comments per story, for the Moved feed.
+  movedCounts: Map<number, number>;
 
   selectedId: number | null;
   thread: Thread | null;
@@ -92,6 +96,17 @@ interface AppState {
   paletteOpen: boolean;
   settingsOpen: boolean;
   presetsOpen: boolean;
+  libraryOpen: boolean;
+  view: View;
+
+  /// Stories picked in the Library for a cross-thread reading.
+  picked: Set<number>;
+  syntheses: Synthesis[];
+  synthesisText: string;
+  synthesisBusy: boolean;
+  synthesisRunId: string | null;
+  synthesisError: string | null;
+  activeSynthesis: number | null;
   chatOpen: boolean;
   jumpTarget: number | null;
 
@@ -109,6 +124,7 @@ interface AppState {
   bootstrap: () => Promise<void>;
   setFeed: (feed: FeedName) => Promise<void>;
   refreshFeed: (manual?: boolean) => Promise<void>;
+  loadUpdates: () => Promise<void>;
   loadMore: () => Promise<void>;
   runSearch: (query: string) => Promise<void>;
   clearSearch: () => Promise<void>;
@@ -132,6 +148,15 @@ interface AppState {
   setPaletteOpen: (open: boolean) => void;
   setSettingsOpen: (open: boolean) => void;
   setPresetsOpen: (open: boolean) => void;
+  setLibraryOpen: (open: boolean) => void;
+  setView: (view: View) => void;
+  togglePicked: (storyId: number) => void;
+  clearPicked: () => void;
+  runSynthesis: (instruction: string) => Promise<void>;
+  stopSynthesis: () => Promise<void>;
+  loadSyntheses: () => Promise<void>;
+  openSynthesis: (id: number) => void;
+  removeSynthesis: (id: number) => Promise<void>;
   setProvider: (provider: Provider) => Promise<void>;
   setModelFor: (slot: ModelSlot, model: string | null) => Promise<void>;
   setPrefetch: (mode: PrefetchMode) => Promise<void>;
@@ -242,6 +267,7 @@ export const useApp = create<AppState>((set, get) => ({
   searchQuery: "",
   searching: false,
   readIds: new Set(),
+  movedCounts: new Map(),
 
   selectedId: null,
   thread: null,
@@ -280,6 +306,16 @@ export const useApp = create<AppState>((set, get) => ({
   paletteOpen: false,
   settingsOpen: false,
   presetsOpen: false,
+  libraryOpen: false,
+  view: "reader",
+
+  picked: new Set(),
+  syntheses: [],
+  synthesisText: "",
+  synthesisBusy: false,
+  synthesisRunId: null,
+  synthesisError: null,
+  activeSynthesis: null,
   chatOpen: true,
   jumpTarget: null,
 
@@ -333,6 +369,11 @@ export const useApp = create<AppState>((set, get) => ({
     if (get().feed === feed && !get().searching) {
       return;
     }
+    if (feed === "moved") {
+      set({ feed, searchQuery: "", searching: false, stories: [], hasMore: false });
+      await get().loadUpdates();
+      return;
+    }
     // Clearing first is what lets the skeleton appear instead of the old feed
     // sitting there looking current.
     set({ feed, searchQuery: "", searching: false, stories: [], hasMore: true });
@@ -340,6 +381,12 @@ export const useApp = create<AppState>((set, get) => ({
   },
 
   refreshFeed: async (manual = false) => {
+    if (get().feed === "moved") {
+      set({ refreshing: manual });
+      await get().loadUpdates();
+      set({ refreshing: false });
+      return;
+    }
     set({ loadingFeed: true, feedError: null, refreshing: manual });
     try {
       const stories = await api.loadFeed(get().feed, 0, PAGE);
@@ -349,8 +396,26 @@ export const useApp = create<AppState>((set, get) => ({
     }
   },
 
+  loadUpdates: async () => {
+    set({ loadingFeed: true, feedError: null, refreshing: false });
+    try {
+      const found = await api.updates();
+      set({
+        stories: found.map((entry) => entry.story),
+        movedCounts: new Map(found.map((entry) => [entry.story.id, entry.newComments])),
+        loadingFeed: false,
+        hasMore: false,
+      });
+    } catch (err) {
+      set({ loadingFeed: false, feedError: String(err) });
+    }
+  },
+
   loadMore: async () => {
     const state = get();
+    if (state.feed === "moved") {
+      return;
+    }
     if (state.searching || state.loadingMore || state.loadingFeed || !state.hasMore) {
       return;
     }
@@ -396,6 +461,7 @@ export const useApp = create<AppState>((set, get) => ({
   },
 
   selectStory: async (id) => {
+    set({ view: "reader" });
     if (get().selectedId === id) {
       return;
     }
@@ -844,6 +910,96 @@ export const useApp = create<AppState>((set, get) => ({
   setPaletteOpen: (paletteOpen) => set({ paletteOpen }),
   setSettingsOpen: (settingsOpen) => set({ settingsOpen }),
   setPresetsOpen: (presetsOpen) => set({ presetsOpen }),
+  setLibraryOpen: (libraryOpen) => set({ libraryOpen }),
+  setView: (view) => set({ view }),
+
+  togglePicked: (storyId) => {
+    const picked = new Set(get().picked);
+    if (picked.has(storyId)) {
+      picked.delete(storyId);
+    } else {
+      picked.add(storyId);
+    }
+    set({ picked });
+  },
+
+  clearPicked: () => set({ picked: new Set() }),
+
+  loadSyntheses: async () => {
+    const syntheses = await api.synthesisList().catch(() => [] as Synthesis[]);
+    set({ syntheses });
+  },
+
+  openSynthesis: (id) => {
+    const found = get().syntheses.find((entry) => entry.id === id);
+    if (!found) {
+      return;
+    }
+    set({ view: "synthesis", activeSynthesis: id, synthesisText: found.markdown });
+  },
+
+  removeSynthesis: async (id) => {
+    await api.synthesisDelete(id).catch(() => undefined);
+    if (get().activeSynthesis === id) {
+      set({ activeSynthesis: null, synthesisText: "" });
+    }
+    await get().loadSyntheses();
+  },
+
+  runSynthesis: async (instruction) => {
+    const state = get();
+    if (state.synthesisBusy || state.picked.size < 2) {
+      return;
+    }
+    const runId = newRunId();
+    set({
+      view: "synthesis",
+      synthesisBusy: true,
+      synthesisRunId: runId,
+      synthesisText: "",
+      synthesisError: null,
+      activeSynthesis: null,
+      libraryOpen: false,
+    });
+
+    trackRun(runId, {
+      onDelta: (text) => {
+        set((current) => ({ synthesisText: current.synthesisText + text }));
+      },
+      onDone: (payload) => {
+        set((current) => ({
+          synthesisBusy: false,
+          synthesisRunId: null,
+          synthesisText: payload.text || current.synthesisText,
+        }));
+        get().loadSyntheses();
+      },
+      onError: (message) => {
+        set({ synthesisBusy: false, synthesisRunId: null, synthesisError: message });
+      },
+    });
+
+    await api
+      .synthesise({
+        runId,
+        storyIds: Array.from(state.picked),
+        provider: state.provider,
+        model: state.models.rundown,
+        instruction,
+      })
+      .catch((err) => {
+        set({ synthesisBusy: false, synthesisRunId: null, synthesisError: String(err) });
+      });
+  },
+
+  stopSynthesis: async () => {
+    const runId = get().synthesisRunId;
+    if (!runId) {
+      return;
+    }
+    await api.cancelRun(runId).catch(() => undefined);
+    set({ synthesisBusy: false, synthesisRunId: null });
+  },
 
   setProvider: async (provider) => {
     set({ provider });

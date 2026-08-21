@@ -15,10 +15,11 @@ interface Props {
   footer?: MenuEntry[];
   ariaLabel: string;
   align?: "start" | "center" | "end";
+  side?: "top" | "bottom";
 }
 
 export function Menu(props: Props) {
-  const { trigger, entries, footer, ariaLabel, align } = props;
+  const { trigger, entries, footer, ariaLabel, align, side } = props;
 
   const render = (entry: MenuEntry) => (
     <Base.Item
@@ -41,7 +42,7 @@ export function Menu(props: Props) {
         {trigger}
       </Base.Trigger>
       <Base.Portal>
-        <Base.Positioner className="ui-layer" side="top" align={align ?? "start"} sideOffset={8}>
+        <Base.Positioner className="ui-layer" side={side ?? "top"} align={align ?? "start"} sideOffset={8}>
           <Base.Popup className="ui-menu-popup">
             {entries.map(render)}
             {footer && footer.length > 0 ? (

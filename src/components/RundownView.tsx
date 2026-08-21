@@ -7,6 +7,9 @@ import { Tooltip } from "./ui/Tooltip";
 import { countWords, mergeSourceRuns, minutes, renderLevel } from "../lib/digest";
 import { formatDuration } from "../lib/format";
 import type { ReadLevel } from "../lib/types";
+import { Menu } from "./ui/Menu";
+import { ChevronDown } from "lucide-react";
+import { toPlainMarkdown, toPortableMarkdown } from "../lib/export";
 
 /// How many distinct comments the briefing leans on, for the header count.
 function countSources(markdown: string) {
@@ -167,13 +170,32 @@ export function RundownView() {
               </>
             ) : null}
             <div className="spacer" />
-            <button
-              type="button"
-              className="ghost-button"
-              onClick={() => navigator.clipboard.writeText(output.text)}
-            >
-              Copy
-            </button>
+            <Menu
+              ariaLabel="Copy this briefing"
+              side="bottom"
+              align="end"
+              trigger={
+                <>
+                  Copy
+                  <ChevronDown size={11} strokeWidth={2} />
+                </>
+              }
+              entries={[
+                {
+                  id: "links",
+                  label: "Copy with links",
+                  hint: "Markdown, with each source pointing at its comment on Hacker News",
+                  onSelect: () =>
+                    navigator.clipboard.writeText(toPortableMarkdown(output.text)),
+                },
+                {
+                  id: "plain",
+                  label: "Copy without sources",
+                  hint: "Just the prose, for pasting into a draft",
+                  onSelect: () => navigator.clipboard.writeText(toPlainMarkdown(output.text)),
+                },
+              ]}
+            />
             <button
               type="button"
               className="ghost-button"

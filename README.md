@@ -58,6 +58,24 @@ seeds the starting suggestions. Ships with five — best takes, the disagreement
 you, talking past it, what's wrong. Save any question you have typed, or edit the list with
 `⌘P`.
 
+**Read together.** Pick two or more stories in the Library and get one piece about what they
+add up to — the same force under different names, two threads that contradict each other, a
+claim in one that answers a question left open in another. It is told to say so and stop if
+they have nothing in common, because a forced theme is worse than none.
+
+Where a story already has a briefing, that is what gets used instead of its raw comments: the
+thread was already distilled once, so re-reading it would spend the budget to reach a worse
+version of the same thing. Three briefed threads cost about 8k tokens rather than three full
+packs. Past pieces are kept and can be reopened.
+
+**Library.** `⌘L` searches everything you have ever opened — every comment, briefing, digest
+and conversation — with FTS5 over a local index that fills itself as you read. Nothing to file.
+A hit opens the story on the right tab. With the search box empty it browses instead, grouped
+by the day you read them, which is where you pick stories to read together.
+
+**Moved.** A feed built from your own reading rather than from Hacker News: stories you have
+opened that have gained comments since, ordered by how much they moved.
+
 **Find.** `⌘F` searches the open thread by body text or author, with match stepping and both
 the current hit and every other hit marked. `n` and `p` walk the top-level comments.
 
@@ -111,6 +129,7 @@ To check the pipeline end to end against a real thread without opening the app:
 cd src-tauri
 cargo run --example e2e -- 49273478 sonnet          # fetch, digest, verify
 cargo run --example e2e -- 49273478 sonnet out.md   # re-verify a saved digest
+cargo run --example synth -- sonnet 49321298 49371857   # cross-thread synthesis
 ```
 
 ## Keyboard
@@ -127,6 +146,7 @@ cargo run --example e2e -- 49273478 sonnet out.md   # re-verify a saved digest
 | `⌘D` | Digest this thread |
 | `⌘\` | Show or hide the chat pane |
 | `⌘R` | Reload the thread, bypassing cache |
+| `⌘L` | Search everything you have read |
 | `⌘P` | Presets |
 | `⌘,` | Settings |
 

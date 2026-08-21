@@ -235,6 +235,90 @@ Start with the opening sentence. No preamble."
     )
 }
 
+/// One story's contribution to a cross-thread reading.
+pub struct Source {
+    pub story_id: u64,
+    pub title: String,
+    pub url: Option<String>,
+    /// Either an existing briefing or a packed slice of the thread.
+    pub body: String,
+}
+
+pub fn synthesis_system() -> String {
+    format!(
+        "You read several unrelated discussions from the same week and write one \
+piece about what they add up to. The reader has read none of them and wants to \
+know what is going on, not what each thread said.
+
+Your job is the connections, not the summaries. A paragraph that describes one \
+thread is a failure. Every section must draw on at least two of them.
+
+Look for:
+- the same force showing up in different places under different names
+- two threads that contradict each other, where neither knows about the other
+- a claim in one that answers a question left open in another
+- a pattern that is only visible across them and invisible inside any one
+
+If the threads genuinely have nothing to do with each other, say so in one \
+sentence and stop. A forced connection is worse than no connection. Do not \
+manufacture a theme.
+
+Cite a story by linking its title to its Hacker News page, in this form:
+
+[the story title](https://news.ycombinator.com/item?id=ID)
+
+Use the id given for that story. Cite the first time you draw on a thread in \
+each section.
+
+{PLAIN_ENGLISH}"
+    )
+}
+
+pub fn synthesis_prompt(sources: &[Source], instruction: &str) -> String {
+    let mut context = String::new();
+    for source in sources {
+        context.push_str(&format!(
+            "<story id={} title=\"{}\"{}>\n{}\n</story>\n\n",
+            source.story_id,
+            source.title.replace('"', "'"),
+            source
+                .url
+                .as_deref()
+                .map(|url| format!(" url=\"{url}\""))
+                .unwrap_or_default(),
+            source.body
+        ));
+    }
+
+    let ask = instruction.trim();
+    let ask = if ask.is_empty() {
+        "Write the piece."
+    } else {
+        ask
+    };
+
+    format!(
+        "{context}---
+
+{ask}
+
+In markdown:
+
+Open with one sentence naming what these threads have in common. If they have \
+nothing in common, say that instead and write nothing else.
+
+Then 3 to 5 sections under `##` headings. Each heading names the connection, \
+not the topic — `## Everyone is repricing around inference, not models`, never \
+`## Pricing`. Each section draws on at least two stories and cites them.
+
+Finish with `## What nobody said` — one or two bullets on the question these \
+threads raise together and none of them answers. Omit it if there is no such \
+question.
+
+Start with the opening sentence. No preamble."
+    )
+}
+
 pub fn chat_system(thread: &Thread, article: Option<&crate::article::Article>) -> String {
     let context = pack(thread, article, DEFAULT_BUDGET);
     format!(

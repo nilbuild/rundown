@@ -6,6 +6,9 @@ import { Tooltip } from "./ui/Tooltip";
 import { DigestReader } from "./DigestReader";
 import { ErrorState } from "./ErrorState";
 import type { OutputKind, VerifyReport } from "../lib/types";
+import { Menu } from "./ui/Menu";
+import { ChevronDown } from "lucide-react";
+import { toPlainMarkdown, toPortableMarkdown } from "../lib/export";
 
 interface Props {
   kind: OutputKind;
@@ -112,13 +115,32 @@ export function OutputView(props: Props) {
               <span className="muted">{formatDuration(output.durationMs)}</span>
             ) : null}
             <div className="spacer" />
-            <button
-              type="button"
-              className="ghost-button"
-              onClick={() => navigator.clipboard.writeText(output.text)}
-            >
-              Copy
-            </button>
+            <Menu
+              ariaLabel="Copy this digest"
+              side="bottom"
+              align="end"
+              trigger={
+                <>
+                  Copy
+                  <ChevronDown size={11} strokeWidth={2} />
+                </>
+              }
+              entries={[
+                {
+                  id: "links",
+                  label: "Copy with links",
+                  hint: "Markdown, with each source pointing at its comment on Hacker News",
+                  onSelect: () =>
+                    navigator.clipboard.writeText(toPortableMarkdown(output.text)),
+                },
+                {
+                  id: "plain",
+                  label: "Copy without sources",
+                  hint: "Just the prose, for pasting into a draft",
+                  onSelect: () => navigator.clipboard.writeText(toPlainMarkdown(output.text)),
+                },
+              ]}
+            />
             <button type="button" className="ghost-button" onClick={() => runOutput(kind, true)}>
               Regenerate
             </button>

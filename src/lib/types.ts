@@ -1,4 +1,4 @@
-export type FeedName = "top" | "best" | "new" | "ask" | "show" | "jobs";
+export type FeedName = "top" | "best" | "new" | "ask" | "show" | "jobs" | "moved";
 
 export type Provider = "claude" | "codex";
 
@@ -112,6 +112,43 @@ export interface Preset {
 }
 
 export type Models = Record<ModelSlot, string | null>;
+
+export interface LibraryHit {
+  storyId: number;
+  title: string;
+  kind: string;
+  /// Matched text with <b> around the query terms.
+  snippet: string;
+  createdAt: number;
+}
+
+export interface LibraryStats {
+  entries: number;
+  stories: number;
+}
+
+/// A story you have read that has gained comments since.
+export interface Update {
+  story: Story;
+  newComments: number;
+  readAt: number;
+}
+
+export interface HistoryEntry {
+  storyId: number;
+  title: string;
+  readAt: number;
+  commentCount: number;
+  kinds: string[];
+}
+
+export interface Synthesis {
+  id: number;
+  title: string;
+  storyIds: number[];
+  markdown: string;
+  createdAt: number;
+}
 
 export interface Coverage {
   included: number;

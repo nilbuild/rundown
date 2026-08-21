@@ -16,6 +16,10 @@ const FEEDS: { key: FeedName; label: string }[] = [
   { key: "jobs", label: "Jobs" },
 ];
 
+/// Kept apart from the Hacker News feeds because it is built from your own
+/// reading rather than fetched from a list.
+const MOVED: FeedName = "moved";
+
 export function Sidebar() {
   const feed = useApp((state) => state.feed);
   const stories = useApp((state) => state.stories);
@@ -35,6 +39,7 @@ export function Sidebar() {
   const runSearch = useApp((state) => state.runSearch);
   const clearSearch = useApp((state) => state.clearSearch);
   const loadMore = useApp((state) => state.loadMore);
+  const movedCounts = useApp((state) => state.movedCounts);
 
   const [draft, setDraft] = useState("");
   const listRef = useRef<HTMLDivElement>(null);
@@ -151,6 +156,14 @@ export function Sidebar() {
             {entry.label}
           </button>
         ))}
+        <button
+          type="button"
+          className={!searching && feed === MOVED ? "active" : ""}
+          title="Stories you have read that gained comments since"
+          onClick={() => setFeed(MOVED)}
+        >
+          Moved
+        </button>
         <Tooltip label={refreshing ? "Refreshing…" : "Refresh this feed"}>
           <button
             type="button"
@@ -174,7 +187,11 @@ export function Sidebar() {
         ) : null}
         {!loading && !error && stories.length === 0 ? (
           <div className="hint pad">
-            {searching ? `Nothing matched “${searchQuery}”.` : "Nothing here."}
+            {searching
+              ? `Nothing matched “${searchQuery}”.`
+              : feed === MOVED
+                ? "Nothing you have read has new comments."
+                : "Nothing here."}
           </div>
         ) : null}
 
@@ -194,7 +211,13 @@ export function Sidebar() {
               <div className="story-meta">
                 {story.domain ? <span className="domain">{story.domain}</span> : null}
                 <span>{compact(story.score)} pts</span>
-                <span>{compact(story.descendants)} comments</span>
+                {movedCounts.get(story.id) ? (
+                  <span className="moved-count">
+                    {compact(movedCounts.get(story.id)!)} new
+                  </span>
+                ) : (
+                  <span>{compact(story.descendants)} comments</span>
+                )}
                 <span>{timeAgo(story.time)}</span>
               </div>
             </div>
