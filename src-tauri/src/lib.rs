@@ -366,48 +366,6 @@ fn library_search(store: State<'_, Store>, query: String) -> Fallible<Vec<Librar
     store.library_search(&query, 60).map_err(fail)
 }
 
-#[derive(Serialize)]
-#[serde(rename_all = "camelCase")]
-struct Update {
-    story: Story,
-    new_comments: u32,
-    read_at: i64,
-}
-
-/// Stories you have already read that have gained comments since. This is the
-/// inventory that per-thread new-comment counts could not give you: what moved,
-/// without having to reopen each one to find out.
-#[tauri::command]
-async fn updates(store: State<'_, Store>) -> Fallible<Vec<Update>> {
-    let seen = store.recent_reads(40).map_err(fail)?;
-
-    let fetched = futures::future::join_all(
-        seen.iter().map(|(id, _, _)| hn::story(*id)),
-    )
-    .await;
-
-    let mut out: Vec<Update> = seen
-        .into_iter()
-        .zip(fetched)
-        .filter_map(|((_, count_when_read, read_at), story)| {
-            let story = story.ok()?;
-            let now = story.descendants.max(0) as u32;
-            let gained = now.saturating_sub(count_when_read);
-            if gained == 0 {
-                return None;
-            }
-            Some(Update {
-                story,
-                new_comments: gained,
-                read_at,
-            })
-        })
-        .collect();
-
-    out.sort_by(|a, b| b.new_comments.cmp(&a.new_comments));
-    Ok(out)
-}
-
 #[tauri::command]
 fn library_stats(store: State<'_, Store>) -> Fallible<LibraryStats> {
     let (entries, stories) = store.library_size().map_err(fail)?;
@@ -673,7 +631,6 @@ pub fn run() {
             cached_kinds,
             library_search,
             library_stats,
-            updates,
             reading_history,
             synthesise,
             synthesis_list,

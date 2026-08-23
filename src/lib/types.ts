@@ -1,4 +1,4 @@
-export type FeedName = "top" | "best" | "new" | "ask" | "show" | "jobs" | "moved";
+export type FeedName = "top" | "best" | "new" | "ask" | "show" | "jobs";
 
 export type Provider = "claude" | "codex";
 
@@ -125,13 +125,6 @@ export interface LibraryHit {
 export interface LibraryStats {
   entries: number;
   stories: number;
-}
-
-/// A story you have read that has gained comments since.
-export interface Update {
-  story: Story;
-  newComments: number;
-  readAt: number;
 }
 
 export interface HistoryEntry {

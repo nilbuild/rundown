@@ -73,11 +73,6 @@ export function CommandPalette() {
         label: "Read several threads together",
         run: () => useApp.getState().setView("synthesis"),
       },
-      {
-        id: "moved",
-        label: "Feed: Moved — read stories with new comments",
-        run: () => setFeed("moved"),
-      },
       { id: "presets", label: "Presets", hint: "⌘P", run: () => setPresetsOpen(true) },
       { id: "settings", label: "Settings", hint: "⌘,", run: () => setSettingsOpen(true) },
     ];

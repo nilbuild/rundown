@@ -73,9 +73,6 @@ and conversation — with FTS5 over a local index that fills itself as you read.
 A hit opens the story on the right tab. With the search box empty it browses instead, grouped
 by the day you read them, which is where you pick stories to read together.
 
-**Moved.** A feed built from your own reading rather than from Hacker News: stories you have
-opened that have gained comments since, ordered by how much they moved.
-
 **Find.** `⌘F` searches the open thread by body text or author, with match stepping and both
 the current hit and every other hit marked. `n` and `p` walk the top-level comments.
 

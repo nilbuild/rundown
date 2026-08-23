@@ -58,8 +58,6 @@ interface AppState {
   searchQuery: string;
   searching: boolean;
   readIds: Set<number>;
-  /// New comments per story, for the Moved feed.
-  movedCounts: Map<number, number>;
 
   selectedId: number | null;
   thread: Thread | null;
@@ -124,7 +122,6 @@ interface AppState {
   bootstrap: () => Promise<void>;
   setFeed: (feed: FeedName) => Promise<void>;
   refreshFeed: (manual?: boolean) => Promise<void>;
-  loadUpdates: () => Promise<void>;
   loadMore: () => Promise<void>;
   runSearch: (query: string) => Promise<void>;
   clearSearch: () => Promise<void>;
@@ -267,7 +264,6 @@ export const useApp = create<AppState>((set, get) => ({
   searchQuery: "",
   searching: false,
   readIds: new Set(),
-  movedCounts: new Map(),
 
   selectedId: null,
   thread: null,
@@ -369,11 +365,6 @@ export const useApp = create<AppState>((set, get) => ({
     if (get().feed === feed && !get().searching) {
       return;
     }
-    if (feed === "moved") {
-      set({ feed, searchQuery: "", searching: false, stories: [], hasMore: false });
-      await get().loadUpdates();
-      return;
-    }
     // Clearing first is what lets the skeleton appear instead of the old feed
     // sitting there looking current.
     set({ feed, searchQuery: "", searching: false, stories: [], hasMore: true });
@@ -381,12 +372,6 @@ export const useApp = create<AppState>((set, get) => ({
   },
 
   refreshFeed: async (manual = false) => {
-    if (get().feed === "moved") {
-      set({ refreshing: manual });
-      await get().loadUpdates();
-      set({ refreshing: false });
-      return;
-    }
     set({ loadingFeed: true, feedError: null, refreshing: manual });
     try {
       const stories = await api.loadFeed(get().feed, 0, PAGE);
@@ -396,26 +381,8 @@ export const useApp = create<AppState>((set, get) => ({
     }
   },
 
-  loadUpdates: async () => {
-    set({ loadingFeed: true, feedError: null, refreshing: false });
-    try {
-      const found = await api.updates();
-      set({
-        stories: found.map((entry) => entry.story),
-        movedCounts: new Map(found.map((entry) => [entry.story.id, entry.newComments])),
-        loadingFeed: false,
-        hasMore: false,
-      });
-    } catch (err) {
-      set({ loadingFeed: false, feedError: String(err) });
-    }
-  },
-
   loadMore: async () => {
     const state = get();
-    if (state.feed === "moved") {
-      return;
-    }
     if (state.searching || state.loadingMore || state.loadingFeed || !state.hasMore) {
       return;
     }

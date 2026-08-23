@@ -464,25 +464,6 @@ impl Store {
         })
     }
 
-    /// The most recently opened stories, with the comment count they had at the
-    /// time, newest first.
-    pub fn recent_reads(&self, limit: usize) -> Result<Vec<(u64, u32, i64)>> {
-        self.with(|conn| {
-            let mut stmt = conn.prepare(
-                "SELECT story_id, comment_count, read_at FROM read_state
-                 ORDER BY read_at DESC LIMIT ?1",
-            )?;
-            let rows = stmt.query_map(params![limit as i64], |row| {
-                Ok((
-                    row.get::<_, i64>(0)? as u64,
-                    row.get::<_, i64>(1)?.max(0) as u32,
-                    row.get::<_, i64>(2)?,
-                ))
-            })?;
-            Ok(rows.filter_map(|row| row.ok()).collect())
-        })
-    }
-
     pub fn read_ids(&self) -> Result<Vec<u64>> {
         self.with(|conn| {
             let mut stmt = conn.prepare("SELECT story_id FROM read_state")?;

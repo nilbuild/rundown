@@ -15,7 +15,6 @@ import type {
   Synthesis,
   Story,
   ThreadView,
-  Update,
 } from "./types";
 
 export function loadFeed(feed: FeedName, offset: number, limit: number) {
@@ -90,10 +89,6 @@ export function synthesisList() {
 
 export function synthesisDelete(id: number) {
   return invoke<void>("synthesis_delete", { id });
-}
-
-export function updates() {
-  return invoke<Update[]>("updates");
 }
 
 export function cachedKinds(storyId: number) {

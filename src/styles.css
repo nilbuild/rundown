@@ -2134,11 +2134,6 @@ button.link:hover,
   font-weight: 600;
 }
 
-.moved-count {
-  color: var(--good);
-  font-weight: 550;
-}
-
 /* ---------------------------------------------- library browse, synthesis */
 
 .library-day {
