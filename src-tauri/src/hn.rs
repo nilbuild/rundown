@@ -200,9 +200,25 @@ fn build_comment(item: AlgoliaItem, depth: u32) -> Option<Comment> {
     })
 }
 
+/// Algolia serves a whole comment tree in one request, which is why it is the
+/// first choice. Its index lags behind Hacker News by some minutes to hours, so
+/// a story from the front page is often missing from it entirely — at the time
+/// of writing, 21 of the top 30. Firebase always has the data and costs one
+/// request per comment, so it is the fallback rather than the default.
 pub async fn thread(id: u64) -> Result<Thread> {
+    match thread_via_algolia(id).await {
+        Ok(thread) => Ok(thread),
+        Err(_) => thread_via_firebase(id).await,
+    }
+}
+
+async fn thread_via_algolia(id: u64) -> Result<Thread> {
     let url = format!("{ALGOLIA}/items/{id}");
-    let root: AlgoliaItem = client().get(url).send().await?.json().await?;
+    let response = client().get(url).send().await?;
+    if !response.status().is_success() {
+        return Err(anyhow!("algolia has not indexed {id} yet"));
+    }
+    let root: AlgoliaItem = response.json().await?;
 
     let title = root.title.clone().unwrap_or_else(|| "(untitled)".into());
     let story_url = root.url.clone();
@@ -289,6 +305,133 @@ pub async fn search(query: &str, by_date: bool) -> Result<Vec<Story>> {
         .collect())
 }
 
+#[derive(Deserialize, Default)]
+struct FirebaseComment {
+    #[serde(default)]
+    id: u64,
+    #[serde(default)]
+    by: Option<String>,
+    #[serde(default)]
+    text: Option<String>,
+    #[serde(default)]
+    time: Option<i64>,
+    #[serde(default)]
+    kids: Vec<u64>,
+    #[serde(default)]
+    deleted: bool,
+    #[serde(default)]
+    dead: bool,
+}
+
+/// Bounded so a thousand-comment thread cannot turn into a thousand requests
+/// before the reader sees anything.
+const MAX_FIREBASE_COMMENTS: usize = 600;
+
+async fn thread_via_firebase(id: u64) -> Result<Thread> {
+    let story = story(id).await?;
+
+    let root: FirebaseComment = client()
+        .get(format!("{FIREBASE}/item/{id}.json"))
+        .send()
+        .await?
+        .json()
+        .await?;
+
+    // Breadth-first, one level at a time, so the fetches inside a level run
+    // together and the cap trims the deepest replies rather than a whole branch.
+    let mut fetched: std::collections::HashMap<u64, FirebaseComment> =
+        std::collections::HashMap::new();
+    let mut frontier = root.kids.clone();
+
+    while !frontier.is_empty() && fetched.len() < MAX_FIREBASE_COMMENTS {
+        let room = MAX_FIREBASE_COMMENTS - fetched.len();
+        let batch: Vec<u64> = frontier.iter().copied().take(room).collect();
+
+        let results = join_all(batch.iter().map(|kid| {
+            let url = format!("{FIREBASE}/item/{kid}.json");
+            async move {
+                client()
+                    .get(url)
+                    .send()
+                    .await
+                    .ok()?
+                    .json::<FirebaseComment>()
+                    .await
+                    .ok()
+            }
+        }))
+        .await;
+
+        let mut next = Vec::new();
+        for comment in results.into_iter().flatten() {
+            next.extend(comment.kids.iter().copied());
+            fetched.insert(comment.id, comment);
+        }
+        frontier = next;
+    }
+
+    let comments = build_firebase(&root.kids, &fetched, 0);
+    let comment_count = comments.iter().map(|c| c.subtree_size).sum();
+
+    Ok(Thread {
+        id,
+        title: story.title,
+        url: story.url,
+        domain: story.domain,
+        author: Some(story.by),
+        points: Some(story.score),
+        created_at: iso_from_unix(story.time),
+        text: story
+            .text
+            .filter(|t| !t.trim().is_empty())
+            .map(|t| crate::text::html_to_text(&t)),
+        comments,
+        comment_count,
+    })
+}
+
+fn build_firebase(
+    ids: &[u64],
+    fetched: &std::collections::HashMap<u64, FirebaseComment>,
+    depth: u32,
+) -> Vec<Comment> {
+    let mut out = Vec::new();
+    for id in ids {
+        let comment = match fetched.get(id) {
+            Some(comment) => comment,
+            None => continue,
+        };
+        let children = build_firebase(&comment.kids, fetched, depth + 1);
+        let html = comment.text.clone().unwrap_or_default();
+
+        // A removed comment can still have live replies, so it is spliced out
+        // rather than taken down with its branch.
+        if comment.deleted || comment.dead || (comment.by.is_none() && html.trim().is_empty()) {
+            out.extend(children);
+            continue;
+        }
+
+        let subtree_size = 1 + children.iter().map(|c| c.subtree_size).sum::<u32>();
+        out.push(Comment {
+            id: comment.id,
+            author: comment.by.clone(),
+            text: crate::text::html_to_text(&html),
+            html,
+            created_at: iso_from_unix(comment.time.unwrap_or(0)),
+            depth,
+            children,
+            subtree_size,
+        });
+    }
+    out
+}
+
+fn iso_from_unix(seconds: i64) -> String {
+    chrono::DateTime::from_timestamp(seconds, 0)
+        .map(|when| when.to_rfc3339())
+        .unwrap_or_default()
+}
+
 /// Flatten a comment forest depth-first, which is the order a reader sees.
 pub fn flatten(comments: &[Comment]) -> Vec<&Comment> {
     let mut out = Vec::new();
@@ -300,4 +443,62 @@ pub fn flatten(comments: &[Comment]) -> Vec<&Comment> {
     }
     walk(comments, &mut out);
     out
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::collections::HashMap;
+
+    fn comment(id: u64, by: Option<&str>, text: &str, kids: Vec<u64>) -> FirebaseComment {
+        FirebaseComment {
+            id,
+            by: by.map(str::to_string),
+            text: Some(text.to_string()),
+            time: Some(1_700_000_000),
+            kids,
+            deleted: false,
+            dead: false,
+        }
+    }
+
+    #[test]
+    fn firebase_replies_nest_and_count_their_subtrees() {
+        let mut fetched = HashMap::new();
+        fetched.insert(1, comment(1, Some("alice"), "top", vec![2, 3]));
+        fetched.insert(2, comment(2, Some("bob"), "reply", vec![4]));
+        fetched.insert(3, comment(3, Some("carol"), "another", vec![]));
+        fetched.insert(4, comment(4, Some("dan"), "deep", vec![]));
+
+        let built = build_firebase(&[1], &fetched, 0);
+        assert_eq!(built.len(), 1);
+        assert_eq!(built[0].subtree_size, 4);
+        assert_eq!(built[0].children.len(), 2);
+        assert_eq!(built[0].children[0].depth, 1);
+        assert_eq!(built[0].children[0].children[0].depth, 2);
+    }
+
+    #[test]
+    fn a_deleted_comment_is_spliced_out_but_keeps_its_replies() {
+        let mut fetched = HashMap::new();
+        let mut removed = comment(1, None, "", vec![2]);
+        removed.deleted = true;
+        fetched.insert(1, removed);
+        fetched.insert(2, comment(2, Some("bob"), "still here", vec![]));
+
+        let built = build_firebase(&[1], &fetched, 0);
+        assert_eq!(built.len(), 1, "the reply should survive its parent");
+        assert_eq!(built[0].author.as_deref(), Some("bob"));
+    }
+
+    #[test]
+    fn a_reply_that_was_never_fetched_is_skipped_rather_than_faked() {
+        // The walk is capped, so the deepest ids can be missing from the map.
+        let mut fetched = HashMap::new();
+        fetched.insert(1, comment(1, Some("alice"), "top", vec![999]));
+
+        let built = build_firebase(&[1], &fetched, 0);
+        assert_eq!(built[0].children.len(), 0);
+        assert_eq!(built[0].subtree_size, 1);
+    }
 }

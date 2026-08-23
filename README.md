@@ -151,7 +151,8 @@ cargo run --example synth -- sonnet 49321298 49371857   # cross-thread synthesis
 
 ```
 src-tauri/src/
-  hn.rs        Firebase for feed order, Algolia for whole comment trees in one request
+  hn.rs        Firebase for feed order; Algolia for comment trees where it has
+               them, Firebase walked concurrently where it does not
   article.rs   Fetch and reduce a linked page to markdown
   prompts.rs   Prompt text and budget-aware context packing
   ai.rs        Runs claude/codex as a subprocess, streams deltas back as events

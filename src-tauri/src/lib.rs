@@ -105,7 +105,9 @@ struct ThreadView {
 
 #[tauri::command]
 async fn load_thread(store: State<'_, Store>, id: u64, refresh: bool) -> Fallible<ThreadView> {
-    let thread = resolve_thread(&store, id, refresh).await.map_err(fail)?;
+    let thread = resolve_thread(&store, id, refresh)
+        .await
+        .map_err(|err| format!("Could not load this thread: {err}"))?;
     let previous = store.visit(id, thread.comment_count).unwrap_or(None);
     let new_comments = previous.map(|(before, _)| thread.comment_count.saturating_sub(before));
     let last_visit = previous.map(|(_, read_at)| read_at);
