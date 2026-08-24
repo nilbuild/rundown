@@ -104,9 +104,14 @@ export function PresetsDialog() {
                   </div>
                 ) : (
                   <>
-                    <div className="preset-body">
+                    {/* Name only at rest. This is the MANAGE surface — you
+                        already know what your own presets ask — and the prompt
+                        is right there the moment you press Edit. Showing both
+                        made every row three lines tall, which is what pushed
+                        "Add one" below the fold once you had a handful. The
+                        full prompt stays one hover away as the title. */}
+                    <div className="preset-body" title={preset.prompt}>
                       <span className="preset-label">{preset.label}</span>
-                      <span className="preset-prompt">{preset.prompt}</span>
                     </div>
                     <div className="preset-actions">
                       {thread ? (

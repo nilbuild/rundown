@@ -551,3 +551,64 @@ pub async fn probe(provider: Provider) -> Option<String> {
     }
     Some(String::from_utf8_lossy(&output.stdout).trim().to_string())
 }
+
+/// Asks the CLI what an alias currently resolves to.
+///
+/// `opus` is a pointer at the latest model in its tier, which is what stops the
+/// picker going stale — but it also means the picker cannot say what you are
+/// about to run. A stream-json session names its model in the `init` line it
+/// prints during startup, before any request is made, so the child is killed
+/// the moment that line arrives: nothing is generated and no allowance is
+/// spent. Settings are left out so this never triggers the reader's own
+/// SessionStart hooks.
+pub async fn resolve_alias(alias: &str) -> Option<String> {
+    let mut child = Command::new(Provider::Claude.binary())
+        .args([
+            "-p",
+            "hi",
+            "--output-format",
+            "stream-json",
+            "--verbose",
+            "--tools",
+            "",
+            "--disable-slash-commands",
+            "--strict-mcp-config",
+            "--mcp-config",
+            r#"{"mcpServers":{}}"#,
+            "--setting-sources",
+            "",
+            "--no-session-persistence",
+            "--model",
+            alias,
+        ])
+        .current_dir(workdir())
+        .stdin(Stdio::null())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::null())
+        .kill_on_drop(true)
+        .spawn()
+        .ok()?;
+
+    let stdout = child.stdout.take()?;
+    let mut lines = BufReader::new(stdout).lines();
+
+    let found = tokio::time::timeout(std::time::Duration::from_secs(30), async {
+        while let Ok(Some(line)) = lines.next_line().await {
+            let event: serde_json::Value = match serde_json::from_str(&line) {
+                Ok(event) => event,
+                Err(_) => continue,
+            };
+            if event["subtype"] != "init" {
+                continue;
+            }
+            return event["model"].as_str().map(str::to_string);
+        }
+        None
+    })
+    .await
+    .ok()
+    .flatten();
+
+    let _ = child.kill().await;
+    found
+}

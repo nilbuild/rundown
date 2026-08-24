@@ -12,7 +12,9 @@ import type {
   RateLimit,
   Selection,
   Models,
+  ModelOption,
   ModelSlot,
+  ProviderModels,
   PrefetchMode,
   ReadLevel,
   Preset,
@@ -112,7 +114,7 @@ interface AppState {
   /// Only the slots you have actually chosen. Anything absent follows the
   /// default, so a slot you never touched keeps tracking it — including slots
   /// added in a later version.
-  modelOverrides: Partial<Models>;
+  modelOverrides: ProviderModels;
   /// Defaults with your choices laid over them. Derived; never persisted.
   models: Models;
   presets: Preset[];
@@ -122,6 +124,11 @@ interface AppState {
   prefetchPending: boolean;
   readLevel: ReadLevel;
   providerStatus: ProviderStatus | null;
+  /// What the active provider actually offers, read from it rather than guessed.
+  modelOptions: ModelOption[];
+  /// Claude alias -> the model it currently points at. Empty for Codex, whose
+  /// options are concrete already.
+  modelResolved: Record<string, string>;
   rateLimit: RateLimit | null;
 
   bootstrap: () => Promise<void>;
@@ -185,11 +192,12 @@ const PAGE = 30;
 /// The digest is the output worth spending on, so it defaults to the strongest
 /// model. The brief is a throwaway summary and the chat needs to feel
 /// responsive, so both default lower.
-const DEFAULT_MODELS: Models = {
-  rundown: "opus",
-  digest: "opus",
-  brief: "haiku",
-  chat: "sonnet",
+/// Claude gets named defaults because its aliases are stable and the tradeoff
+/// is known. Codex is left on whatever `~/.codex/config.toml` selects, since
+/// naming a model it has not got is worse than naming none.
+const DEFAULT_MODELS: Record<Provider, Models> = {
+  claude: { rundown: "opus", digest: "opus", brief: "haiku", chat: "sonnet" },
+  codex: { rundown: null, digest: null, brief: null, chat: null },
 };
 
 /// Seeded so the feature is useful before you have saved anything. These are
@@ -228,8 +236,21 @@ const DEFAULT_PRESETS: Preset[] = [
   },
 ];
 
-function withDefaults(overrides: Partial<Models>): Models {
-  return { ...DEFAULT_MODELS, ...overrides };
+function withDefaults(provider: Provider, overrides: ProviderModels): Models {
+  return { ...DEFAULT_MODELS[provider], ...(overrides[provider] ?? {}) };
+}
+
+/// Earlier versions stored one flat map, which silently sent Claude's model
+/// names to Codex. A flat map is read as the Claude choices it always was.
+function readOverrides(raw: unknown): ProviderModels {
+  if (!raw || typeof raw !== "object") {
+    return {};
+  }
+  const value = raw as Record<string, unknown>;
+  if ("claude" in value || "codex" in value) {
+    return value as ProviderModels;
+  }
+  return Object.keys(value).length > 0 ? { claude: value as Partial<Models> } : {};
 }
 
 /// Wait before speculatively digesting, so paging through the list with j/k
@@ -327,13 +348,15 @@ export const useApp = create<AppState>((set, get) => ({
 
   provider: "claude",
   modelOverrides: {},
-  models: DEFAULT_MODELS,
+  models: DEFAULT_MODELS.claude,
   presets: DEFAULT_PRESETS,
   prefetch: "rundown",
   prefetching: false,
   prefetchPending: false,
   readLevel: "skim",
   providerStatus: null,
+  modelOptions: [],
+  modelResolved: {},
   rateLimit: null,
 
   bootstrap: async () => {
@@ -345,11 +368,12 @@ export const useApp = create<AppState>((set, get) => ({
       api.readIds().catch(() => [] as number[]),
     ]);
 
-    const stored = (settings.models ?? {}) as Partial<Models>;
+    const provider = (settings.provider as Provider) ?? "claude";
+    const stored = readOverrides(settings.models);
     set({
-      provider: (settings.provider as Provider) ?? "claude",
+      provider,
       modelOverrides: stored,
-      models: withDefaults(stored),
+      models: withDefaults(provider, stored),
       // The setting used to be a boolean; keep old installs working.
       prefetch:
         typeof settings.prefetch === "string"
@@ -364,6 +388,16 @@ export const useApp = create<AppState>((set, get) => ({
       providerStatus: status,
       readIds: new Set(seen),
     });
+
+    api
+      .availableModels(provider)
+      .then((modelOptions) => set({ modelOptions }))
+      .catch(() => undefined);
+
+    api
+      .resolveModels(provider)
+      .then((modelResolved) => set({ modelResolved }))
+      .catch(() => undefined);
 
     await get().refreshFeed();
   },
@@ -976,21 +1010,46 @@ export const useApp = create<AppState>((set, get) => ({
   },
 
   setProvider: async (provider) => {
-    set({ provider });
+    // The usage figure came from the provider being left behind.
+    set({
+      provider,
+      models: withDefaults(provider, get().modelOverrides),
+      rateLimit: null,
+    });
     await api.settingsSet("provider", provider).catch(() => undefined);
+    const modelOptions = await api.availableModels(provider).catch(() => [] as ModelOption[]);
+    set({ modelOptions, modelResolved: {} });
+    api
+      .resolveModels(provider)
+      .then((modelResolved) => {
+        // The reader may have switched back while the probe was running.
+        if (get().provider !== provider) {
+          return;
+        }
+        set({ modelResolved });
+      })
+      .catch(() => undefined);
   },
 
   setModelFor: async (slot, model) => {
     // Persist the one slot that changed, not the merged map. Writing all four
     // would freeze the untouched ones at today's defaults forever.
-    const modelOverrides = { ...get().modelOverrides, [slot]: model };
-    set({ modelOverrides, models: withDefaults(modelOverrides) });
+    const provider = get().provider;
+    const current = get().modelOverrides;
+    const modelOverrides: ProviderModels = {
+      ...current,
+      [provider]: { ...(current[provider] ?? {}), [slot]: model },
+    };
+    set({ modelOverrides, models: withDefaults(provider, modelOverrides) });
     await api.settingsSet("models", modelOverrides).catch(() => undefined);
   },
 
   resetModels: async () => {
-    set({ modelOverrides: {}, models: DEFAULT_MODELS });
-    await api.settingsSet("models", {}).catch(() => undefined);
+    const provider = get().provider;
+    const modelOverrides = { ...get().modelOverrides };
+    delete modelOverrides[provider];
+    set({ modelOverrides, models: withDefaults(provider, modelOverrides) });
+    await api.settingsSet("models", modelOverrides).catch(() => undefined);
   },
 
   addPreset: async (label, prompt) => {

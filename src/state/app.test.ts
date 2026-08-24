@@ -17,6 +17,8 @@ vi.mock("../lib/api", () => ({
   settingsSet: vi.fn(async () => undefined),
   settingsAll: vi.fn(async () => ({})),
   providers: vi.fn(async () => null),
+  availableModels: vi.fn(async () => []),
+  resolveModels: vi.fn(async () => ({})),
   readIds: vi.fn(async () => []),
   loadFeed: vi.fn(async () => []),
   loadThread: vi.fn(async () => ({ thread: null, newComments: null, lastVisit: null })),
@@ -91,17 +93,19 @@ describe("a run does not bleed into the next story", () => {
 
 describe("model slots", () => {
   beforeEach(() => {
-    useApp.setState({ modelOverrides: {}, models: { rundown: "opus", digest: "opus", brief: "haiku", chat: "sonnet" } });
+    useApp.setState({
+      provider: "claude",
+      modelOverrides: {},
+      models: { rundown: "opus", digest: "opus", brief: "haiku", chat: "sonnet" },
+    });
   });
 
-  it("persists only the slot that changed", async () => {
+  it("persists only the slot that changed, under its provider", async () => {
     const api = await import("../lib/api");
     await useApp.getState().setModelFor("chat", "haiku");
 
-    // The whole point: an untouched slot must not be written, or it stops
-    // tracking the default the day the default changes.
-    expect(useApp.getState().modelOverrides).toEqual({ chat: "haiku" });
-    expect(api.settingsSet).toHaveBeenLastCalledWith("models", { chat: "haiku" });
+    expect(useApp.getState().modelOverrides).toEqual({ claude: { chat: "haiku" } });
+    expect(api.settingsSet).toHaveBeenLastCalledWith("models", { claude: { chat: "haiku" } });
   });
 
   it("keeps untouched slots on their defaults", async () => {
@@ -109,14 +113,36 @@ describe("model slots", () => {
     const models = useApp.getState().models;
     expect(models.chat).toBe("haiku");
     expect(models.rundown).toBe("opus");
-    expect(models.digest).toBe("opus");
-    expect(models.brief).toBe("haiku");
   });
 
-  it("resetting clears every choice", async () => {
-    await useApp.getState().setModelFor("digest", null);
+  it("never sends one provider's model names to the other", async () => {
+    // Claude's `opus` is meaningless to Codex and made every run fail with
+    // "Model metadata for `opus` not found".
+    await useApp.getState().setProvider("codex");
+    const models = useApp.getState().models;
+    expect(models.rundown).toBeNull();
+    expect(models.digest).toBeNull();
+    expect(Object.values(models).every((m) => m === null)).toBe(true);
+  });
+
+  it("remembers each provider's choices separately", async () => {
+    await useApp.getState().setModelFor("chat", "haiku");
+    await useApp.getState().setProvider("codex");
+    await useApp.getState().setModelFor("chat", "gpt-5.6-sol");
+
+    expect(useApp.getState().models.chat).toBe("gpt-5.6-sol");
+    await useApp.getState().setProvider("claude");
+    expect(useApp.getState().models.chat).toBe("haiku");
+  });
+
+  it("resetting clears only the current provider", async () => {
+    await useApp.getState().setModelFor("digest", "sonnet");
+    await useApp.getState().setProvider("codex");
+    await useApp.getState().setModelFor("digest", "gpt-5.6-codex");
     await useApp.getState().resetModels();
-    expect(useApp.getState().modelOverrides).toEqual({});
-    expect(useApp.getState().models.digest).toBe("opus");
+
+    expect(useApp.getState().modelOverrides).toEqual({ claude: { digest: "sonnet" } });
+    await useApp.getState().setProvider("claude");
+    expect(useApp.getState().models.digest).toBe("sonnet");
   });
 });

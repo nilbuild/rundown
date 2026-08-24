@@ -1316,6 +1316,7 @@ button.link:hover,
 
 .chat-input-foot .fine {
   font-size: 11px;
+  white-space: nowrap;
 }
 
 /* ------------------------------------------------------- palette, popover */
@@ -1459,7 +1460,8 @@ button.link:hover,
   color: var(--muted);
 }
 
-.settings .row > .ui-select {
+.settings .row > .ui-select,
+.settings .row > .ui-combo {
   justify-self: start;
   min-width: 200px;
 }
@@ -1468,7 +1470,7 @@ button.link:hover,
   justify-self: start;
 }
 
-.settings input[type="text"] {
+.settings input[type="text"]:not(.ui-combo-input) {
   padding: 6px 10px;
   border-radius: 7px;
   border: 1px solid var(--line);
@@ -1900,6 +1902,85 @@ button.link:hover,
   margin-left: auto;
 }
 
+.ui-combo {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  height: 28px;
+  padding: 0 4px 0 10px;
+  border-radius: 7px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  transition: border-color 0.12s ease;
+}
+
+.ui-combo:hover {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--line));
+}
+
+.ui-combo:focus-within {
+  border-color: color-mix(in srgb, var(--accent) 65%, var(--line));
+}
+
+/* An <input> carries a ~20-character intrinsic width, so left to itself the
+   combobox pushes everything else in the composer row off the end. */
+.ui-combo.sm {
+  height: 24px;
+  width: 140px;
+  flex-shrink: 0;
+  padding: 0 3px 0 9px;
+  background: none;
+}
+
+.ui-combo-input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  border: none;
+  background: none;
+  color: var(--text);
+  font-size: 12.5px;
+  font-family: inherit;
+  outline: none;
+}
+
+.ui-combo.sm .ui-combo-input {
+  font-size: 11.5px;
+}
+
+.ui-combo-input::placeholder {
+  color: var(--muted);
+}
+
+.ui-combo-caret {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  border-radius: 5px;
+  color: var(--muted);
+}
+
+.ui-combo-caret:hover {
+  color: var(--text);
+  background: var(--line-soft);
+}
+
+.ui-combo-empty {
+  padding: 7px 10px;
+  color: var(--muted);
+  font-size: 11.5px;
+  line-height: 1.4;
+}
+
+/* Base UI always renders this element so its live region stays put, and only
+   nulls the children. Left with padding it is a permanent gap above the list. */
+.ui-combo-empty:empty {
+  padding: 0;
+}
+
 .ui-select-popup {
   min-width: var(--anchor-width);
   padding: 4px;
@@ -1920,7 +2001,7 @@ button.link:hover,
 
 .ui-select-item {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 8px;
   padding: 6px 10px 6px 7px;
   border-radius: 7px;
@@ -1940,7 +2021,6 @@ button.link:hover,
   display: inline-flex;
   width: 12px;
   flex-shrink: 0;
-  padding-top: 3px;
   color: var(--accent);
 }
 
@@ -1955,18 +2035,30 @@ button.link:hover,
   font-size: 11px;
 }
 
+/* The model an alias points at, pushed to the right of the row so the names
+   stay in one readable column. */
+.ui-select-resolved {
+  margin-left: auto;
+  padding-left: 14px;
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 10.5px;
+}
+
 /* ---------------------------------------------------------------- menus */
 
+/* Sits next to `.ghost-button` and `.icon-button` in every toolbar that uses
+   it, so it has to carry their height rather than its own. */
 .ui-menu-trigger {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  height: 24px;
-  padding: 0 9px;
+  height: 26px;
+  padding: 0 10px;
   border-radius: 7px;
   border: 1px solid var(--line);
   color: var(--text-2);
-  font-size: 11.5px;
+  font-size: 12px;
   transition: border-color 0.12s ease, color 0.12s ease;
 }
 
@@ -1979,6 +2071,15 @@ button.link:hover,
 .ui-menu-popup {
   width: 300px;
   max-width: 78vw;
+  /* A menu with no ceiling grows past the viewport, and the entries below the
+     fold — including "Manage presets…" — cannot be reached at all. The ceiling
+     is set high enough that the default handful never scrolls: clipping a list
+     that already fits is a worse trade than a scrollbar on a long one. Base UI
+     publishes the room it actually has as --available-height; the vh is the
+     fallback for when it does not. */
+  max-height: min(var(--available-height, 70vh), 520px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 4px;
   border-radius: 10px;
   border: 1px solid var(--line);
@@ -2398,6 +2499,22 @@ button.link:hover,
   outline: none;
 }
 
+/* The dialog itself does not scroll — the LIST does. `.ui-dialog` puts
+   overflow on the whole popup, which is right for Settings but wrong here:
+   with a dozen presets the title scrolled away and "Add one" sat below every
+   one of them, so adding a preset meant scrolling past all the others first.
+   Header and form are pinned; only the list moves. */
+.presets-dialog {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.presets-dialog header,
+.presets-dialog .preset-new {
+  flex: none;
+}
+
 .preset-list {
   list-style: none;
   margin: 0 0 14px;
@@ -2405,14 +2522,29 @@ button.link:hover,
   display: flex;
   flex-direction: column;
   gap: 2px;
+  flex: 1 1 auto;
+  /* Without this a flex child refuses to shrink below its content, and the
+     list pushes the form out of the dialog instead of scrolling. */
+  min-height: 0;
+  overflow-y: auto;
+  /* The scrollbar rides in the dialog's own padding rather than biting into
+     the rows, so a row's hover fill still reaches the edge. */
+  margin-right: -10px;
+  padding-right: 10px;
 }
 
 .preset-list li {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 10px;
-  padding: 9px 8px 9px 11px;
+  padding: 7px 8px 7px 11px;
   border-radius: 9px;
+}
+
+/* An editing row is the exception: it grows to hold the fields, so it stops
+   centring and goes back to a block. */
+.preset-list li.editing {
+  align-items: stretch;
 }
 
 .preset-list li:hover:not(.editing) {
@@ -2483,11 +2615,11 @@ button.link:hover,
 }
 
 .preset-body {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
   min-width: 0;
   flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .preset-label {

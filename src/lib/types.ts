@@ -113,6 +113,10 @@ export interface Preset {
 
 export type Models = Record<ModelSlot, string | null>;
 
+/// Model names belong to one provider. Claude's `opus` means nothing to Codex,
+/// so choices are kept apart rather than shared.
+export type ProviderModels = Partial<Record<Provider, Partial<Models>>>;
+
 export interface LibraryHit {
   storyId: number;
   title: string;
@@ -147,6 +151,12 @@ export interface Coverage {
   included: number;
   total: number;
   chars: number;
+}
+
+export interface ModelOption {
+  value: string;
+  label: string;
+  hint?: string;
 }
 
 export interface ProviderStatus {

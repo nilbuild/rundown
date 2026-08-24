@@ -12,6 +12,7 @@ import type {
   HistoryEntry,
   LibraryHit,
   LibraryStats,
+  ModelOption,
   Synthesis,
   Story,
   ThreadView,
@@ -128,6 +129,17 @@ export function settingsAll() {
 
 export function settingsSet(key: string, value: unknown) {
   return invoke<void>("settings_set", { key, value });
+}
+
+export function availableModels(provider: Provider) {
+  return invoke<ModelOption[]>("available_models", { provider });
+}
+
+/// Slow the first time (it starts the CLI once per alias) and instant after,
+/// so callers should fire it and let the answer land rather than await it
+/// before drawing.
+export function resolveModels(provider: Provider) {
+  return invoke<Record<string, string>>("resolve_models", { provider });
 }
 
 export function providers() {

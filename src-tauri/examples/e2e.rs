@@ -13,6 +13,7 @@ async fn main() -> anyhow::Result<()> {
     let mut args = std::env::args().skip(1);
     let story_id: u64 = args.next().unwrap_or_else(|| "49273478".into()).parse()?;
     let model = args.next().unwrap_or_else(|| "sonnet".into());
+    let provider = std::env::var("SIFT_PROVIDER").unwrap_or_else(|_| "claude".into());
     // Re-check an already-generated digest instead of paying for a new one.
     let replay = args.next();
 
@@ -60,10 +61,23 @@ async fn main() -> anyhow::Result<()> {
     let system = prompts::digest_system();
     let prompt = prompts::digest_prompt(&thread, article.as_ref());
 
-    eprintln!("running claude ({model})…");
+    eprintln!("running {provider} ({model})…");
     let started = std::time::Instant::now();
 
-    let mut child = Command::new("claude")
+    let mut child = if provider == "codex" {
+        // Codex has no system-prompt flag, so it is folded into the message —
+        // the same thing ai.rs does.
+        let mut c = Command::new("codex");
+        c.args(["exec", "--json", "--skip-git-repo-check", "--sandbox", "read-only", "--ephemeral"]);
+        if model != "default" {
+            c.args(["--model", &model]);
+        }
+        c.arg("-")
+            .stdin(Stdio::piped())
+            .stdout(Stdio::piped())
+            .spawn()?
+    } else {
+        Command::new("claude")
         .args([
             "-p",
             "--output-format",
@@ -84,16 +98,28 @@ async fn main() -> anyhow::Result<()> {
         ])
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
-        .spawn()?;
+        .spawn()?
+    };
 
-    child
-        .stdin
-        .as_mut()
-        .expect("stdin")
-        .write_all(prompt.as_bytes())?;
+    let payload = if provider == "codex" {
+        format!("{system}\n\n---\n\n{prompt}")
+    } else {
+        prompt.clone()
+    };
+    child.stdin.as_mut().expect("stdin").write_all(payload.as_bytes())?;
 
     let output = child.wait_with_output()?;
-    let digest = String::from_utf8_lossy(&output.stdout).to_string();
+    let raw = String::from_utf8_lossy(&output.stdout).to_string();
+    let digest = if provider == "codex" {
+        raw.lines()
+            .filter_map(|l| serde_json::from_str::<serde_json::Value>(l).ok())
+            .filter(|v| v["type"] == "item.completed" && v["item"]["type"] == "agent_message")
+            .filter_map(|v| v["item"]["text"].as_str().map(str::to_string))
+            .collect::<Vec<_>>()
+            .join("\n")
+    } else {
+        raw
+    };
     eprintln!("  done in {:.1}s\n", started.elapsed().as_secs_f32());
 
     println!("{digest}");

@@ -6,20 +6,6 @@ import { Select } from "./ui/Select";
 import type { ModelSlot, PrefetchMode, Provider } from "../lib/types";
 import { X } from "lucide-react";
 
-const CLAUDE_MODELS = [
-  { value: "", label: "CLI default" },
-  { value: "haiku", label: "Haiku — fastest" },
-  { value: "sonnet", label: "Sonnet — balanced" },
-  { value: "opus", label: "Opus — deepest" },
-  { value: "fable", label: "Fable" },
-];
-
-const CODEX_MODELS = [
-  { value: "", label: "config.toml default" },
-  { value: "gpt-5.6-sol", label: "gpt-5.6-sol" },
-  { value: "gpt-5.6-codex", label: "gpt-5.6-codex" },
-];
-
 const SLOTS: { slot: ModelSlot; label: string; hint: string }[] = [
   { slot: "rundown", label: "Rundown", hint: "The thread summary — worth the deepest model" },
   { slot: "digest", label: "Digest", hint: "The thread digest — worth the deepest model" },
@@ -57,7 +43,8 @@ export function Settings() {
     dataLocation().then(setLocation).catch(() => undefined);
   }, [open]);
 
-  const options = provider === "claude" ? CLAUDE_MODELS : CODEX_MODELS;
+  const options = useApp((state) => state.modelOptions);
+  const resolved = useApp((state) => state.modelResolved);
   const installed = provider === "claude" ? status?.claude : status?.codex;
 
   return (
@@ -146,6 +133,7 @@ export function Settings() {
                 ariaLabel={`Model for ${entry.label}`}
                 value={models[entry.slot] ?? ""}
                 options={options}
+                resolved={resolved}
                 onChange={(next) => setModelFor(entry.slot, next || null)}
               />
             </div>

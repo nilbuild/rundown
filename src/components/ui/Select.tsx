@@ -1,11 +1,10 @@
-import { Select as Base } from "@base-ui-components/react/select";
+import { useEffect, useRef, useState } from "react";
+import { Autocomplete } from "@base-ui-components/react/autocomplete";
 import { Check, ChevronDown } from "lucide-react";
+import { matches, toItems } from "../../lib/models";
+import type { Item, Option } from "../../lib/models";
 
-export interface Option {
-  value: string;
-  label: string;
-  hint?: string;
-}
+export type { Option };
 
 interface Props {
   value: string;
@@ -13,44 +12,97 @@ interface Props {
   onChange: (value: string) => void;
   ariaLabel: string;
   size?: "sm" | "md";
+  placeholder?: string;
+  /// Option value -> the model it resolves to. Shown beside the name so an
+  /// alias says what it will actually run.
+  resolved?: Record<string, string>;
 }
 
-/// A styled listbox rather than a native `<select>`, which on macOS renders
-/// with system chrome that fights the rest of the app.
+/// A combobox rather than a listbox: the offered models are a convenience, not
+/// a ceiling. Claude's aliases and Codex's cached slugs each go out of date in
+/// their own way, so any model the CLI accepts can be typed straight in. The
+/// field therefore shows the model string rather than the friendly name — what
+/// you read is what gets passed to `--model`.
 export function Select(props: Props) {
-  const { value, options, onChange, ariaLabel, size } = props;
-  const current = options.find((option) => option.value === value);
+  const { value, options, onChange, ariaLabel, size, placeholder, resolved } = props;
+
+  const [draft, setDraft] = useState(value);
+  // Commits read this rather than `draft`: blur and Enter can land in the same
+  // tick as a keystroke, and state would still be a character behind.
+  const latest = useRef(value);
+
+  useEffect(() => {
+    setDraft(value);
+    latest.current = value;
+  }, [value]);
+
+  const items = toItems(options);
+
+  function commit(next: string) {
+    const trimmed = next.trim();
+    if (trimmed === value) {
+      return;
+    }
+    onChange(trimmed);
+  }
 
   return (
-    <Base.Root
-      value={value}
-      onValueChange={(next) => onChange(String(next ?? ""))}
-      items={options}
+    <Autocomplete.Root
+      items={items}
+      value={draft}
+      openOnInputClick
+      filter={matches}
+      onValueChange={(next, details) => {
+        latest.current = next;
+        setDraft(next);
+        if (details.reason !== "item-press") {
+          return;
+        }
+        commit(next);
+      }}
     >
-      <Base.Trigger className={`ui-select ${size === "sm" ? "sm" : ""}`} aria-label={ariaLabel}>
-        <Base.Value>{current?.label ?? "Default"}</Base.Value>
-        <Base.Icon className="ui-select-caret">
-<ChevronDown size={12} strokeWidth={2} />
-        </Base.Icon>
-      </Base.Trigger>
+      <div className={`ui-combo ${size === "sm" ? "sm" : ""}`}>
+        <Autocomplete.Input
+          className="ui-combo-input"
+          aria-label={ariaLabel}
+          placeholder={placeholder ?? "Default"}
+          spellCheck={false}
+          autoComplete="off"
+          onBlur={() => commit(latest.current)}
+          onKeyDown={(event) => {
+            if (event.key !== "Enter") {
+              return;
+            }
+            commit(latest.current);
+          }}
+        />
+        <Autocomplete.Trigger className="ui-combo-caret" aria-label="Show models">
+          <ChevronDown size={12} strokeWidth={2} />
+        </Autocomplete.Trigger>
+      </div>
 
-      <Base.Portal>
-        <Base.Positioner className="ui-layer" sideOffset={6} alignItemWithTrigger={false}>
-          <Base.Popup className="ui-select-popup">
-            {options.map((option) => (
-              <Base.Item key={option.value} value={option.value} className="ui-select-item">
-                <Base.ItemIndicator className="ui-select-check">
-<Check size={12} strokeWidth={2.4} />
-                </Base.ItemIndicator>
-                <div className="ui-select-body">
-                  <Base.ItemText>{option.label}</Base.ItemText>
-                  {option.hint ? <span className="ui-select-hint">{option.hint}</span> : null}
-                </div>
-              </Base.Item>
-            ))}
-          </Base.Popup>
-        </Base.Positioner>
-      </Base.Portal>
-    </Base.Root>
+      <Autocomplete.Portal>
+        <Autocomplete.Positioner className="ui-layer" sideOffset={6}>
+          <Autocomplete.Popup className="ui-select-popup">
+            <Autocomplete.Empty className="ui-combo-empty">
+              No match — press ⏎ to use what you typed
+            </Autocomplete.Empty>
+            <Autocomplete.List>
+              {(item: Item) => (
+                <Autocomplete.Item key={item.value} value={item} className="ui-select-item">
+                  <span className="ui-select-check">
+                    {item.value === value ? <Check size={12} strokeWidth={2.4} /> : null}
+                  </span>
+                  {item.title}
+                  {resolved?.[item.value] ? (
+                    <span className="ui-select-resolved">{resolved[item.value]}</span>
+                  ) : null}
+                </Autocomplete.Item>
+              )}
+            </Autocomplete.List>
+          </Autocomplete.Popup>
+        </Autocomplete.Positioner>
+      </Autocomplete.Portal>
+    </Autocomplete.Root>
   );
 }

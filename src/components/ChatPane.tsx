@@ -7,20 +7,6 @@ import type { MenuEntry } from "./ui/Menu";
 import { Tooltip } from "./ui/Tooltip";
 import { ListFilter, X } from "lucide-react";
 
-const CLAUDE_MODELS = [
-  { value: "", label: "Default" },
-  { value: "haiku", label: "Haiku" },
-  { value: "sonnet", label: "Sonnet" },
-  { value: "opus", label: "Opus" },
-  { value: "fable", label: "Fable" },
-];
-
-const CODEX_MODELS = [
-  { value: "", label: "Default" },
-  { value: "gpt-5.6-sol", label: "Sol" },
-  { value: "gpt-5.6-codex", label: "Codex" },
-];
-
 export function ChatPane() {
   const thread = useApp((state) => state.thread);
   const messages = useApp((state) => state.chatMessages);
@@ -29,8 +15,9 @@ export function ChatPane() {
   const error = useApp((state) => state.chatError);
   const selection = useApp((state) => state.selection);
   const chatOpen = useApp((state) => state.chatOpen);
-  const provider = useApp((state) => state.provider);
   const models = useApp((state) => state.models);
+  const options = useApp((state) => state.modelOptions);
+  const resolved = useApp((state) => state.modelResolved);
 
   const sendChat = useApp((state) => state.sendChat);
   const stopChat = useApp((state) => state.stopChat);
@@ -78,8 +65,6 @@ export function ChatPane() {
       </button>
     );
   }
-
-  const options = provider === "claude" ? CLAUDE_MODELS : CODEX_MODELS;
 
   const submit = () => {
     const value = draft.trim();
@@ -140,6 +125,17 @@ export function ChatPane() {
           Chat
         </span>
         <div className="spacer" data-tauri-drag-region />
+        <Menu
+          ariaLabel="Saved questions"
+          entries={presetEntries}
+          footer={presetFooter}
+          trigger={
+            <>
+              <ListFilter size={12} strokeWidth={2} />
+              Presets
+            </>
+          }
+        />
         {messages.length > 0 ? (
           <button type="button" className="ghost-button" onClick={() => resetChat()}>
             Clear
@@ -291,22 +287,12 @@ export function ChatPane() {
         ) : null}
 
         <div className="chat-input-foot">
-          <Menu
-            ariaLabel="Saved questions"
-            entries={presetEntries}
-            footer={presetFooter}
-            trigger={
-              <>
-<ListFilter size={12} strokeWidth={2} />
-                Presets
-              </>
-            }
-          />
           <Select
             size="sm"
             ariaLabel="Model used for chat"
             value={models.chat ?? ""}
             options={options}
+            resolved={resolved}
             onChange={(next) => setModelFor("chat", next || null)}
           />
           <span className="fine">{busy ? "Streaming…" : "⏎ to send"}</span>
