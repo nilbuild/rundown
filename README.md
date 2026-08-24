@@ -171,6 +171,15 @@ Threads larger than the context budget are packed by a score that favours substa
 well-replied-to, shallow comments. When that happens the digest screen says how many of the
 thread's comments were actually sent, rather than implying full coverage.
 
+## The icon
+
+`src-tauri/icons/source.svg` is the master. Regenerate the set with:
+
+```sh
+rsvg-convert -w 1024 -h 1024 src-tauri/icons/source.svg -o /tmp/icon.png
+pnpm tauri icon /tmp/icon.png && rm -rf src-tauri/icons/android src-tauri/icons/ios
+```
+
 ## Data
 
 Threads, articles, generated output, and chat sessions live in one SQLite file at
