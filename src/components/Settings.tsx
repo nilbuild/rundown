@@ -43,6 +43,8 @@ export function Settings() {
   const rateLimit = useApp((state) => state.rateLimit);
   const setProvider = useApp((state) => state.setProvider);
   const setModelFor = useApp((state) => state.setModelFor);
+  const resetModels = useApp((state) => state.resetModels);
+  const modelOverrides = useApp((state) => state.modelOverrides);
   const setPrefetch = useApp((state) => state.setPrefetch);
   const setPresetsOpen = useApp((state) => state.setPresetsOpen);
 
@@ -123,6 +125,20 @@ export function Settings() {
             Set per job rather than globally, so the digest can think hard while the chat stays
             quick.
           </p>
+          {Object.keys(modelOverrides).length > 0 ? (
+            <div className="row">
+              <label />
+              <button
+                type="button"
+                className="ghost-button"
+                style={{ justifySelf: "start" }}
+                onClick={() => resetModels()}
+              >
+                Use the defaults
+              </button>
+            </div>
+          ) : null}
+
           {SLOTS.map((entry) => (
             <div className="row" key={entry.slot}>
               <label title={entry.hint}>{entry.label}</label>

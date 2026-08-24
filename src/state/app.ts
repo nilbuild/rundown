@@ -109,6 +109,11 @@ interface AppState {
   jumpTarget: number | null;
 
   provider: Provider;
+  /// Only the slots you have actually chosen. Anything absent follows the
+  /// default, so a slot you never touched keeps tracking it — including slots
+  /// added in a later version.
+  modelOverrides: Partial<Models>;
+  /// Defaults with your choices laid over them. Derived; never persisted.
   models: Models;
   presets: Preset[];
   prefetch: PrefetchMode;
@@ -156,6 +161,7 @@ interface AppState {
   removeSynthesis: (id: number) => Promise<void>;
   setProvider: (provider: Provider) => Promise<void>;
   setModelFor: (slot: ModelSlot, model: string | null) => Promise<void>;
+  resetModels: () => Promise<void>;
   setPrefetch: (mode: PrefetchMode) => Promise<void>;
   setReadLevel: (level: ReadLevel) => Promise<void>;
   addPreset: (label: string, prompt: string) => Promise<void>;
@@ -221,6 +227,10 @@ const DEFAULT_PRESETS: Preset[] = [
       "What claims in this thread are wrong, unsupported, or would not survive scrutiny? Be specific and cite them.",
   },
 ];
+
+function withDefaults(overrides: Partial<Models>): Models {
+  return { ...DEFAULT_MODELS, ...overrides };
+}
 
 /// Wait before speculatively digesting, so paging through the list with j/k
 /// does not fire a run per story.
@@ -316,6 +326,7 @@ export const useApp = create<AppState>((set, get) => ({
   jumpTarget: null,
 
   provider: "claude",
+  modelOverrides: {},
   models: DEFAULT_MODELS,
   presets: DEFAULT_PRESETS,
   prefetch: "rundown",
@@ -337,12 +348,8 @@ export const useApp = create<AppState>((set, get) => ({
     const stored = (settings.models ?? {}) as Partial<Models>;
     set({
       provider: (settings.provider as Provider) ?? "claude",
-      models: {
-        rundown: stored.rundown !== undefined ? stored.rundown : DEFAULT_MODELS.rundown,
-        digest: stored.digest !== undefined ? stored.digest : DEFAULT_MODELS.digest,
-        brief: stored.brief !== undefined ? stored.brief : DEFAULT_MODELS.brief,
-        chat: stored.chat !== undefined ? stored.chat : DEFAULT_MODELS.chat,
-      },
+      modelOverrides: stored,
+      models: withDefaults(stored),
       // The setting used to be a boolean; keep old installs working.
       prefetch:
         typeof settings.prefetch === "string"
@@ -974,9 +981,16 @@ export const useApp = create<AppState>((set, get) => ({
   },
 
   setModelFor: async (slot, model) => {
-    const models = { ...get().models, [slot]: model };
-    set({ models });
-    await api.settingsSet("models", models).catch(() => undefined);
+    // Persist the one slot that changed, not the merged map. Writing all four
+    // would freeze the untouched ones at today's defaults forever.
+    const modelOverrides = { ...get().modelOverrides, [slot]: model };
+    set({ modelOverrides, models: withDefaults(modelOverrides) });
+    await api.settingsSet("models", modelOverrides).catch(() => undefined);
+  },
+
+  resetModels: async () => {
+    set({ modelOverrides: {}, models: DEFAULT_MODELS });
+    await api.settingsSet("models", {}).catch(() => undefined);
   },
 
   addPreset: async (label, prompt) => {

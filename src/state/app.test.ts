@@ -88,3 +88,35 @@ describe("a run does not bleed into the next story", () => {
     expect(useApp.getState().outputs.digest.text).not.toContain("wrong story");
   });
 });
+
+describe("model slots", () => {
+  beforeEach(() => {
+    useApp.setState({ modelOverrides: {}, models: { rundown: "opus", digest: "opus", brief: "haiku", chat: "sonnet" } });
+  });
+
+  it("persists only the slot that changed", async () => {
+    const api = await import("../lib/api");
+    await useApp.getState().setModelFor("chat", "haiku");
+
+    // The whole point: an untouched slot must not be written, or it stops
+    // tracking the default the day the default changes.
+    expect(useApp.getState().modelOverrides).toEqual({ chat: "haiku" });
+    expect(api.settingsSet).toHaveBeenLastCalledWith("models", { chat: "haiku" });
+  });
+
+  it("keeps untouched slots on their defaults", async () => {
+    await useApp.getState().setModelFor("chat", "haiku");
+    const models = useApp.getState().models;
+    expect(models.chat).toBe("haiku");
+    expect(models.rundown).toBe("opus");
+    expect(models.digest).toBe("opus");
+    expect(models.brief).toBe("haiku");
+  });
+
+  it("resetting clears every choice", async () => {
+    await useApp.getState().setModelFor("digest", null);
+    await useApp.getState().resetModels();
+    expect(useApp.getState().modelOverrides).toEqual({});
+    expect(useApp.getState().models.digest).toBe("opus");
+  });
+});
