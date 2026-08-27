@@ -1,0 +1,424 @@
+:root {
+  --bg: #f7f5f2;
+  --panel: #ffffff;
+  --panel-2: #fbfaf8;
+  --text: #1c1b1a;
+  --text-2: #4a4845;
+  --muted: #86827c;
+  --line: rgba(20, 18, 16, 0.1);
+  --line-soft: rgba(20, 18, 16, 0.06);
+  --accent: #c2521c;
+  --accent-soft: rgba(194, 82, 28, 0.1);
+  --good: #2f7d55;
+  --bad: #b4402c;
+  --sel: rgba(194, 82, 28, 0.16);
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.05), 0 12px 32px rgba(0, 0, 0, 0.1);
+
+  --ui: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+  --serif: ui-serif, "New York", Charter, Georgia, serif;
+  --mono: ui-monospace, "SF Mono", Menlo, monospace;
+
+  --sidebar-w: 328px;
+  --chat-w: 400px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #141416;
+    --panel: #1a1a1d;
+    --panel-2: #202024;
+    --text: #e9e7e4;
+    --text-2: #c2bfba;
+    --muted: #8b8781;
+    --line: rgba(255, 255, 255, 0.1);
+    --line-soft: rgba(255, 255, 255, 0.055);
+    --accent: #ff8248;
+    --accent-soft: rgba(255, 130, 72, 0.14);
+    --good: #5fbb87;
+    --bad: #ef7f68;
+    --sel: rgba(255, 130, 72, 0.22);
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 16px 40px rgba(0, 0, 0, 0.5);
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--ui);
+  font-size: 13.5px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+
+::selection {
+  background: var(--sel);
+}
+
+[data-tauri-drag-region] {
+  cursor: default;
+  user-select: none;
+}
+
+/* Controls sitting inside a drag region keep their own behaviour. */
+[data-tauri-drag-region] button,
+[data-tauri-drag-region] a,
+[data-tauri-drag-region] input,
+[data-tauri-drag-region] select,
+[data-tauri-drag-region] textarea {
+  cursor: pointer;
+  user-select: auto;
+}
+
+[data-tauri-drag-region] input,
+[data-tauri-drag-region] textarea {
+  cursor: text;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+button svg {
+  display: block;
+  flex-shrink: 0;
+}
+
+input,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+/* WebKit paints autofilled fields with its own background. It ignores
+   border-radius and beats any `background` rule, which is what turned the
+   search box into a tan slab. An inset shadow is the only thing that covers
+   it, and the absurd transition delay stops it flashing back on focus. */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active,
+textarea:-webkit-autofill {
+  -webkit-text-fill-color: var(--text);
+  -webkit-box-shadow: 0 0 0 100px var(--panel) inset;
+  box-shadow: 0 0 0 100px var(--panel) inset;
+  caret-color: var(--text);
+  transition: background-color 100000s ease-in-out 0s;
+}
+
+/* `type="search"` brings a native clear button along with it; this app draws
+   its own. */
+input[type="search"]::-webkit-search-decoration,
+input[type="search"]::-webkit-search-cancel-button,
+input[type="search"]::-webkit-search-results-button,
+input[type="search"]::-webkit-search-results-decoration {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+input[type="search"] {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.app {
+  display: grid;
+  grid-template-columns: var(--sidebar-w) minmax(0, 1fr);
+  height: 100%;
+}
+
+.app.with-chat {
+  grid-template-columns: var(--sidebar-w) minmax(0, 1fr) var(--chat-w);
+}
+
+.spacer {
+  flex: 1;
+}
+
+:focus {
+  outline: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+  border-radius: 5px;
+}
+
+.sentinel {
+  padding: 18px 0 6px;
+  text-align: center;
+  font-size: 11.5px;
+  color: var(--muted);
+}
+
+.notice {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 32px;
+  background: color-mix(in srgb, var(--bad) 12%, transparent);
+  color: var(--bad);
+  font-size: 12.5px;
+  border-bottom: 1px solid var(--line);
+}
+
+.notice button {
+  color: inherit;
+  text-decoration: underline;
+  margin-left: auto;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.fine {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.hint {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.hint.pad {
+  padding: 28px 32px;
+}
+
+.hint.error,
+.error {
+  color: var(--bad);
+}
+
+.label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* These read as plain text until you hover them, which is no use if you are
+   looking for the control rather than already pointing at it. They carry their
+   own surface at rest. */
+.ghost-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 7px;
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--text-2);
+  background: var(--line-soft);
+  border: 1px solid var(--line);
+  transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+}
+
+.ghost-button:hover:not(:disabled) {
+  background: var(--line);
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--line));
+  color: var(--text);
+}
+
+.ghost-button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.ghost-button.active {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.ghost-button.danger:hover {
+  color: var(--bad);
+}
+
+.icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  border-radius: 7px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1;
+  background: var(--line-soft);
+  border: 1px solid var(--line);
+  transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+}
+
+.icon-button:hover {
+  background: var(--line);
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--line));
+  color: var(--text);
+}
+
+.primary-button.small {
+  padding: 5px 14px;
+  font-size: 12.5px;
+  border-radius: 7px;
+}
+
+.primary-button {
+  padding: 7px 15px;
+  border-radius: 8px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 550;
+  transition: filter 0.12s ease;
+}
+
+.primary-button:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+.primary-button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+button.link,
+.md a {
+  color: var(--accent);
+  text-decoration: none;
+  border-bottom: 1px solid var(--accent-soft);
+}
+
+button.link:hover,
+.md a:hover {
+  border-bottom-color: var(--accent);
+}
+
+
+/* Portalled popups are siblings of the modal backdrop in <body>, so without a
+   higher layer they render behind it and swallow every click. */
+.ui-layer {
+  z-index: 300;
+}
+
+/* dialog */
+
+.ui-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 260;
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(2px);
+  transition: opacity 0.16s ease;
+}
+
+.ui-backdrop[data-starting-style],
+.ui-backdrop[data-ending-style] {
+  opacity: 0;
+}
+
+.ui-dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 270;
+  width: 560px;
+  max-width: 92vw;
+  max-height: 80vh;
+  overflow-y: auto;
+  padding: 20px 24px 24px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  box-shadow: var(--shadow);
+  outline: none;
+  transition: opacity 0.16s ease, transform 0.16s ease;
+}
+
+.ui-dialog[data-starting-style],
+.ui-dialog[data-ending-style] {
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.97);
+}
+
+.ui-dialog header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.ui-dialog-title {
+  font-size: 16px;
+  font-weight: 620;
+  margin: 0 0 4px;
+}
+
+.ui-dialog-sub {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--muted);
+  margin: 0;
+  max-width: 44ch;
+}
+
+/* scrollbar */
+
+::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--line);
+  border-radius: 6px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--muted);
+  background-clip: content-box;
+}
+
+:root {
+  --hl-key: #a4318f;
+  --hl-str: #237a4b;
+  --hl-num: #9a5b12;
+  --hl-com: #8a8681;
+  --hl-fn: #2a5db0;
+  --hl-type: #8a4b1f;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --hl-key: #e58ad4;
+    --hl-str: #86d6a2;
+    --hl-num: #e2b06a;
+    --hl-com: #7d7973;
+    --hl-fn: #83b4f5;
+    --hl-type: #f0a878;
+  }
+}

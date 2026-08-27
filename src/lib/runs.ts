@@ -1,5 +1,5 @@
 import { listen } from "@tauri-apps/api/event";
-import type { AiEvent, RateLimit, VerifyReport } from "./types";
+import type { AiEvent, RateLimit, VerifyReport } from "~/types";
 
 export interface RunHandlers {
   onStart?: (model: string | null) => void;

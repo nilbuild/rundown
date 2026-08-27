@@ -11,7 +11,7 @@ async fn main() -> anyhow::Result<()> {
                 "ok   {id}  {:>4} comments  {:>5.1}s  {}",
                 t.comment_count,
                 started.elapsed().as_secs_f32(),
-                &t.title.chars().take(46).collect::<String>()
+                t.title.chars().take(46).collect::<String>()
             ),
             Err(e) => println!("FAIL {id}  {e}"),
         }

@@ -22,7 +22,7 @@ async fn main() -> anyhow::Result<()> {
                 stats.included,
                 stats.total,
                 stats.chars / 1000,
-                &thread.title.chars().take(44).collect::<String>()
+                thread.title.chars().take(44).collect::<String>()
             );
         }
     }

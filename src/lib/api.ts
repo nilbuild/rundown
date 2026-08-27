@@ -16,7 +16,7 @@ import type {
   Synthesis,
   Story,
   ThreadView,
-} from "./types";
+} from "~/types";
 
 export function loadFeed(feed: FeedName, offset: number, limit: number) {
   return invoke<Story[]>("feed", { feed, offset, limit });

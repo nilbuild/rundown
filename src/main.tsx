@@ -1,9 +1,9 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import App from "./App";
-import { ErrorBoundary } from "./components/ErrorBoundary";
-import { TooltipProvider } from "./components/ui/Tooltip";
-import "./styles.css";
+import App from "~/app";
+import { ErrorBoundary } from "~/components/ui/error-boundary";
+import { TooltipProvider } from "~/components/ui/tooltip";
+import "~/styles/base.css";
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
