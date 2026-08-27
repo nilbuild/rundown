@@ -1,6 +1,12 @@
 @import "tailwindcss";
 
-:root {
+/* Every colour is a theme token. The document carries `data-theme` with a
+   resolved name — never "system" — set before first paint by the script in
+   index.html, so the app never flashes the wrong palette on launch. */
+
+:root,
+[data-theme="paper"] {
+color-scheme: light;
 --bg: #f7f5f2;
 --panel: #ffffff;
 --panel-2: #fbfaf8;
@@ -15,32 +21,93 @@
 --bad: #b4402c;
 --sel: rgba(194, 82, 28, 0.16);
 --shadow: 0 1px 2px rgba(0, 0, 0, 0.05), 0 12px 32px rgba(0, 0, 0, 0.1);
+--hl-key: #a4318f;
+--hl-str: #237a4b;
+--hl-num: #9a5b12;
+--hl-com: #8a8681;
+--hl-fn: #2a5db0;
+--hl-type: #8a4b1f;
+}
 
+[data-theme="sepia"] {
+color-scheme: light;
+--bg: #f2e9d8;
+--panel: #fbf5e8;
+--panel-2: #f6eedd;
+--text: #3b2f21;
+--text-2: #5d4c37;
+--muted: #948366;
+--line: rgba(70, 52, 28, 0.15);
+--line-soft: rgba(70, 52, 28, 0.075);
+--accent: #a5561d;
+--accent-soft: rgba(165, 86, 29, 0.12);
+--good: #4a7c3f;
+--bad: #a63a2a;
+--sel: rgba(165, 86, 29, 0.2);
+--shadow: 0 1px 2px rgba(60, 40, 15, 0.07), 0 12px 32px rgba(60, 40, 15, 0.14);
+--hl-key: #96307f;
+--hl-str: #2c6b3f;
+--hl-num: #8c5210;
+--hl-com: #9a8a70;
+--hl-fn: #2f5590;
+--hl-type: #834518;
+}
+
+[data-theme="dusk"] {
+color-scheme: dark;
+--bg: #141416;
+--panel: #1a1a1d;
+--panel-2: #202024;
+--text: #e9e7e4;
+--text-2: #c2bfba;
+--muted: #8b8781;
+--line: rgba(255, 255, 255, 0.1);
+--line-soft: rgba(255, 255, 255, 0.055);
+--accent: #ff8248;
+--accent-soft: rgba(255, 130, 72, 0.14);
+--good: #5fbb87;
+--bad: #ef7f68;
+--sel: rgba(255, 130, 72, 0.22);
+--shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 16px 40px rgba(0, 0, 0, 0.5);
+--hl-key: #e58ad4;
+--hl-str: #86d6a2;
+--hl-num: #e2b06a;
+--hl-com: #7d7973;
+--hl-fn: #83b4f5;
+--hl-type: #f0a878;
+}
+
+[data-theme="midnight"] {
+color-scheme: dark;
+--bg: #0b0e14;
+--panel: #111621;
+--panel-2: #161d2b;
+--text: #dce3f0;
+--text-2: #aab6c9;
+--muted: #737f94;
+--line: rgba(150, 175, 215, 0.14);
+--line-soft: rgba(150, 175, 215, 0.07);
+--accent: #6aa8ff;
+--accent-soft: rgba(106, 168, 255, 0.15);
+--good: #5cc9a0;
+--bad: #ff7a80;
+--sel: rgba(106, 168, 255, 0.24);
+--shadow: 0 1px 2px rgba(0, 0, 0, 0.5), 0 16px 40px rgba(0, 0, 0, 0.6);
+--hl-key: #c99bff;
+--hl-str: #7fd1a8;
+--hl-num: #f0b678;
+--hl-com: #64708a;
+--hl-fn: #79b4ff;
+--hl-type: #63d2d2;
+}
+
+:root {
 --ui: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
 --serif: ui-serif, "New York", Charter, Georgia, serif;
 --mono: ui-monospace, "SF Mono", Menlo, monospace;
 
 --sidebar-w: 328px;
 --chat-w: 400px;
-}
-
-@media (prefers-color-scheme: dark) {
-:root {
-  --bg: #141416;
-  --panel: #1a1a1d;
-  --panel-2: #202024;
-  --text: #e9e7e4;
-  --text-2: #c2bfba;
-  --muted: #8b8781;
-  --line: rgba(255, 255, 255, 0.1);
-  --line-soft: rgba(255, 255, 255, 0.055);
-  --accent: #ff8248;
-  --accent-soft: rgba(255, 130, 72, 0.14);
-  --good: #5fbb87;
-  --bad: #ef7f68;
-  --sel: rgba(255, 130, 72, 0.22);
-  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 16px 40px rgba(0, 0, 0, 0.5);
-}
 }
 
 @theme {
@@ -237,25 +304,5 @@ background: var(--line-soft);
   ::-webkit-scrollbar-thumb:hover {
     background: var(--muted);
     background-clip: content-box;
-  }
-
-  :root {
-    --hl-key: #a4318f;
-    --hl-str: #237a4b;
-    --hl-num: #9a5b12;
-    --hl-com: #8a8681;
-    --hl-fn: #2a5db0;
-    --hl-type: #8a4b1f;
-  }
-
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --hl-key: #e58ad4;
-      --hl-str: #86d6a2;
-      --hl-num: #e2b06a;
-      --hl-com: #7d7973;
-      --hl-fn: #83b4f5;
-      --hl-type: #f0a878;
-    }
   }
 }

@@ -11,6 +11,7 @@ import { SynthesisView } from "~/components/synthesis/synthesis-view";
 import { SelectionPopover } from "~/components/chat/selection-popover";
 import { cn } from "~/utils/classname";
 import { UpdateNotice } from "~/components/ui/update-notice";
+import { useSystemTheme } from "~/hooks/use-system-theme";
 
 export default function App() {
   const bootstrap = useApp((state) => state.bootstrap);
@@ -24,6 +25,8 @@ export default function App() {
   const setChatOpen = useApp((state) => state.setChatOpen);
   const runOutput = useApp((state) => state.runOutput);
   const reloadStory = useApp((state) => state.reloadStory);
+
+  useSystemTheme();
 
   useEffect(() => {
     bootstrap();

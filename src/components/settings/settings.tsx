@@ -8,6 +8,7 @@ import { Select } from "~/components/ui/select";
 import type { ModelSlot, PrefetchMode, Provider } from "~/lib/api/settings";
 import { GhostButton } from "~/components/ui/ghost-button";
 import { LinkButton } from "~/components/ui/link-button";
+import { ThemePicker } from "~/components/settings/theme-picker";
 
 const SLOTS: { slot: ModelSlot; label: string; hint: string }[] = [
   { slot: "rundown", label: "Briefing", hint: "The thread summary — worth the deepest model" },
@@ -105,6 +106,17 @@ export function Settings() {
               </span>
             </div>
           ) : null}
+        </section>
+
+        <section className="mt-[30px] first:mt-0">
+          <h3 className="mb-2 text-xs font-semibold tracking-[0.05em] text-muted uppercase">Appearance</h3>
+          <p className="m-0 mb-3.5 max-w-[46ch] text-xs leading-[1.5] text-muted">
+            System follows the macOS appearance and changes with it. The rest stay put.
+          </p>
+          <div className="mt-2.5 grid min-h-7 grid-cols-[96px_minmax(0,1fr)] items-center gap-x-4 gap-y-2 text-[13px]">
+            <label className="text-muted">Theme</label>
+            <ThemePicker />
+          </div>
         </section>
 
         <section className="mt-[30px] first:mt-0">

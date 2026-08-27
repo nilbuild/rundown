@@ -4,7 +4,23 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Tauri + React + Typescript</title>
+    <title>Rundown</title>
+    <!-- The palette has to be on the document before the first paint, and the
+         module bundle is too late for that. Kept in step with utils/theme.ts. -->
+    <script>
+      (function () {
+        var stored = null;
+        try {
+          stored = localStorage.getItem("rundown.theme");
+        } catch (error) {
+          stored = null;
+        }
+        var dark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+        var palettes = ["paper", "sepia", "dusk", "midnight"];
+        document.documentElement.dataset.theme =
+          palettes.indexOf(stored) === -1 ? (dark ? "dusk" : "paper") : stored;
+      })();
+    </script>
   </head>
 
   <body>
