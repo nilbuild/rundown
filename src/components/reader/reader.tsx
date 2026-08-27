@@ -117,7 +117,7 @@ export function Reader() {
     return (
       <main className="flex min-h-0 min-w-0 flex-col bg-panel">
         {notice}
-        <header className="border-b border-line-soft px-8 pt-[15px] pb-[22px]" data-tauri-drag-region>
+        <header className="border-b border-line-soft px-8 pt-9 pb-[26px]" data-tauri-drag-region>
           <div className="skeleton" style={{ width: "52%", height: 17 }} data-tauri-drag-region />
           <div
             className="skeleton"
@@ -166,18 +166,18 @@ export function Reader() {
   return (
     <main className="flex min-h-0 min-w-0 flex-col bg-panel">
       {notice}
-      <header className="border-b border-line-soft px-8 pt-[15px]" data-tauri-drag-region>
+      <header className="border-b border-line-soft px-8 pt-9" data-tauri-drag-region>
         {/* The title is the window's drag handle, as it would be on any Mac
             window. Opening the discussion moved to an explicit control below. */}
         <h1
-          className="mb-1.5 cursor-default text-[17px] leading-[1.35] font-semibold tracking-[-0.012em]"
+          className="mb-2.5 cursor-default text-[17px] leading-[1.35] font-semibold tracking-[-0.012em]"
           data-tauri-drag-region
         >
           {thread.title}
         </h1>
 
         <div
-          className="mb-2.5 flex flex-wrap gap-3 text-xs text-muted"
+          className="mb-4 flex flex-wrap gap-x-3.5 gap-y-1.5 text-xs text-muted"
           data-tauri-drag-region
         >
           {thread.domain ? (
@@ -205,7 +205,7 @@ export function Reader() {
           </LinkButton>
         </div>
 
-        <nav className="flex gap-0.5" data-tauri-drag-region>
+        <nav className="flex gap-1" data-tauri-drag-region>
           {TABS.map((entry) => {
             const output = outputs[entry.key as "digest" | "rundown"];
             const ready = Boolean(output?.text) && !output?.streaming;
@@ -215,8 +215,8 @@ export function Reader() {
                 key={entry.key}
                 type="button"
                 className={cn(
-                  "relative -mb-px border-b-2 border-transparent px-3 pt-[7px] pb-[9px] text-[12.5px] text-muted not-disabled:hover:text-fg disabled:cursor-default disabled:opacity-35",
-                  tab === entry.key && "border-b-accent font-[550] text-fg",
+                  "relative -mb-px border-b-2 border-transparent px-3 pt-2 pb-2.5 text-[12.5px] text-muted not-disabled:hover:text-fg disabled:cursor-default disabled:opacity-35",
+                  tab === entry.key && "border-b-accent text-fg",
                 )}
                 title={entry.hint}
                 onClick={() => setTab(entry.key)}

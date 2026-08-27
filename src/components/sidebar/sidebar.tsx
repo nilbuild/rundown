@@ -118,7 +118,7 @@ export function Sidebar() {
             type="button"
             className={cn(
               "rounded-md px-2 py-[3px] text-xs text-muted hover:bg-line-soft hover:text-fg",
-              !searching && feed === entry.key && "bg-accent-soft font-[550] text-accent",
+              !searching && feed === entry.key && "bg-accent-soft text-accent",
             )}
             onClick={() => setFeed(entry.key)}
           >

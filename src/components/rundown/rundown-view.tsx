@@ -145,7 +145,7 @@ export function RundownView() {
                   className={cn(
                     "inline-flex items-baseline gap-[5px] rounded-md px-2.5 py-[3px] text-[11.5px] text-muted transition-[background,color] duration-[120ms]",
                     readLevel === entry.key
-                      ? "bg-panel font-semibold text-fg shadow-[0_1px_2px_rgba(0,0,0,0.12)]"
+                      ? "bg-panel text-fg shadow-[0_1px_2px_rgba(0,0,0,0.12)]"
                       : "hover:text-fg",
                   )}
                   title={entry.hint}

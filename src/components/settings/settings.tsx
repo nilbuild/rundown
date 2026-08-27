@@ -73,7 +73,7 @@ export function Settings() {
                   type="button"
                   className={cn(
                     "rounded-md px-3.5 py-1 text-[12.5px] text-muted",
-                    provider === entry && "bg-panel font-[550] text-fg shadow-[0_1px_2px_rgba(0,0,0,0.08)]",
+                    provider === entry && "bg-panel text-fg shadow-[0_1px_2px_rgba(0,0,0,0.08)]",
                   )}
                   onClick={() => setProvider(entry)}
                 >
@@ -175,7 +175,7 @@ export function Settings() {
                   type="button"
                   className={cn(
                     "rounded-md px-3.5 py-1 text-[12.5px] text-muted",
-                    prefetch === entry.mode && "bg-panel font-[550] text-fg shadow-[0_1px_2px_rgba(0,0,0,0.08)]",
+                    prefetch === entry.mode && "bg-panel text-fg shadow-[0_1px_2px_rgba(0,0,0,0.08)]",
                   )}
                   onClick={() => setPrefetch(entry.mode)}
                 >

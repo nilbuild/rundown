@@ -39,7 +39,7 @@ export function SynthesisView() {
 
   return (
     <main className="flex min-h-0 min-w-0 flex-col bg-panel">
-      <header className="border-b border-line-soft px-8 pt-[15px]" data-tauri-drag-region>
+      <header className="border-b border-line-soft px-8 pt-9" data-tauri-drag-region>
         <h1 className="mb-1.5 cursor-default text-[17px] leading-[1.35] font-semibold tracking-[-0.012em]" data-tauri-drag-region>
           Read together
         </h1>
