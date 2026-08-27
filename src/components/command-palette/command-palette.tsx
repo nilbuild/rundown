@@ -61,7 +61,7 @@ export function CommandPalette() {
       { id: "reload", label: "Reload this thread", hint: "⌘R", run: () => reloadStory() },
       {
         id: "prefetch",
-        label: prefetch === "off" ? "Generate rundowns early" : "Stop generating early",
+        label: prefetch === "off" ? "Generate briefings early" : "Stop generating early",
         run: () => setPrefetch(prefetch === "off" ? "rundown" : "off"),
       },
       {

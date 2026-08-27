@@ -13,7 +13,7 @@ import { compact, hnLink, timeAgo } from "~/utils/format";
 import type { Tab } from "~/stores/app";
 
 const TABS: { key: Tab; label: string; hint: string }[] = [
-  { key: "rundown", label: "Rundown", hint: "The whole story in plain words" },
+  { key: "rundown", label: "Briefing", hint: "The whole story in plain words" },
   { key: "article", label: "Article", hint: "The linked page, cleaned up" },
   { key: "comments", label: "Comments", hint: "The thread itself" },
   { key: "digest", label: "Digest", hint: "The thinking worth keeping" },

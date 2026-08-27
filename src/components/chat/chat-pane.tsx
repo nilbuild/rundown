@@ -164,9 +164,13 @@ export function ChatPane() {
               The whole thread and the article are already loaded. Ask anything, or start with:
             </p>
             {presets.map((preset) => (
-              <button key={preset.id} type="button" onClick={() => runPreset(preset.id)}>
-                <span className="starter-label">{preset.label}</span>
-                <span className="starter-prompt">{preset.prompt}</span>
+              <button
+                key={preset.id}
+                type="button"
+                title={preset.prompt}
+                onClick={() => runPreset(preset.id)}
+              >
+                {preset.label}
               </button>
             ))}
           </div>

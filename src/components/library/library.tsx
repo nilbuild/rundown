@@ -10,7 +10,7 @@ import type { HistoryEntry, LibraryHit, LibraryStats } from "~/types";
 
 const KIND_LABEL: Record<string, string> = {
   thread: "Comment",
-  rundown: "Rundown",
+  rundown: "Briefing",
   digest: "Digest",
   brief: "Brief",
   chat: "Chat",

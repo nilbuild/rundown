@@ -9,7 +9,7 @@ import type { ModelSlot, PrefetchMode, Provider } from "~/types";
 import { X } from "lucide-react";
 
 const SLOTS: { slot: ModelSlot; label: string; hint: string }[] = [
-  { slot: "rundown", label: "Rundown", hint: "The thread summary — worth the deepest model" },
+  { slot: "rundown", label: "Briefing", hint: "The thread summary — worth the deepest model" },
   { slot: "digest", label: "Digest", hint: "The thread digest — worth the deepest model" },
   { slot: "brief", label: "Brief", hint: "The inline article summary — favour speed" },
   { slot: "chat", label: "Chat", hint: "Sidebar questions — favour responsiveness" },
@@ -17,8 +17,8 @@ const SLOTS: { slot: ModelSlot; label: string; hint: string }[] = [
 
 const PREFETCH: { mode: PrefetchMode; label: string }[] = [
   { mode: "off", label: "Off" },
-  { mode: "rundown", label: "Rundown" },
-  { mode: "both", label: "Rundown + Digest" },
+  { mode: "rundown", label: "Briefing" },
+  { mode: "both", label: "Briefing + Digest" },
 ];
 
 export function Settings() {
