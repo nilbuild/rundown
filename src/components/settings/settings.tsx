@@ -136,6 +136,7 @@ export function Settings() {
                 value={models[entry.slot] ?? ""}
                 options={options}
                 resolved={resolved}
+                className="min-w-[200px] justify-self-start"
                 onChange={(next) => setModelFor(entry.slot, next || null)}
               />
             </div>

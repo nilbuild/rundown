@@ -76,7 +76,7 @@ const Row = memo(function Row(props: RowProps) {
         <div className="comment-head">
           <button
             type="button"
-            className="collapse"
+            className="inline-flex size-4 shrink-0 items-center justify-center rounded border border-line pb-px text-xs leading-none font-medium text-muted tabular-nums hover:bg-line hover:text-fg"
             onClick={() => toggleCollapse(comment.id)}
             title={isCollapsed ? "Expand" : "Collapse"}
           >
@@ -118,9 +118,13 @@ const Row = memo(function Row(props: RowProps) {
         {isCollapsed ? null : <Markdown source={comment.text} className="comment-body" />}
       </div>
 
-      {isCollapsed
-        ? null
-        : comment.children.map((child) => <Row key={child.id} comment={child} />)}
+      {isCollapsed || comment.children.length === 0 ? null : (
+        <div className="comment-children">
+          {comment.children.map((child) => (
+            <Row key={child.id} comment={child} />
+          ))}
+        </div>
+      )}
     </div>
   );
 });

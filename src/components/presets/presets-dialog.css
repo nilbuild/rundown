@@ -1,156 +1,152 @@
-.preset-name {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 2px;
-}
+@layer components {
+  .preset-name {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 2px;
+  }
 
-.preset-name input {
-  flex: 1;
-  height: 28px;
-  padding: 0 10px;
-  border-radius: 8px;
-  border: 1px solid var(--accent);
-  background: var(--panel);
-  font-size: 12.5px;
-  outline: none;
-}
+  .preset-name input {
+    flex: 1;
+    height: 28px;
+    padding: 0 10px;
+    border-radius: 8px;
+    border: 1px solid var(--accent);
+    background: var(--panel);
+    font-size: 12.5px;
+    outline: none;
+  }
 
-/* The dialog itself does not scroll — the LIST does. `.ui-dialog` puts
-   overflow on the whole popup, which is right for Settings but wrong here:
-   with a dozen presets the title scrolled away and "Add one" sat below every
-   one of them, so adding a preset meant scrolling past all the others first.
-   Header and form are pinned; only the list moves. */
-.presets-dialog {
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
+  /* The dialog itself does not scroll — the LIST does. `.ui-dialog` puts
+     overflow on the whole popup, which is right for Settings but wrong here:
+     with a dozen presets the title scrolled away and "Add one" sat below every
+     one of them, so adding a preset meant scrolling past all the others first.
+     Header and form are pinned; only the list moves. */
+  .presets-dialog {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
 
-.presets-dialog header,
-.presets-dialog .preset-new {
-  flex: none;
-}
+  .presets-dialog header,
+  .presets-dialog .preset-new {
+    flex: none;
+  }
 
-.preset-list {
-  list-style: none;
-  margin: 0 0 14px;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  flex: 1 1 auto;
-  /* Without this a flex child refuses to shrink below its content, and the
-     list pushes the form out of the dialog instead of scrolling. */
-  min-height: 0;
-  overflow-y: auto;
-  /* The scrollbar rides in the dialog's own padding rather than biting into
-     the rows, so a row's hover fill still reaches the edge. */
-  margin-right: -10px;
-  padding-right: 10px;
-}
+  .preset-list {
+    list-style: none;
+    margin: 0 0 14px;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1 1 auto;
+    /* Without this a flex child refuses to shrink below its content, and the
+       list pushes the form out of the dialog instead of scrolling. */
+    min-height: 0;
+    overflow-y: auto;
+    /* The scrollbar rides in the dialog's own padding rather than biting into
+       the rows, so a row's hover fill still reaches the edge. */
+    margin-right: -10px;
+    padding-right: 10px;
+  }
 
-.preset-list li {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 7px 8px 7px 11px;
-  border-radius: 9px;
-}
+  .preset-list li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 8px 7px 11px;
+    border-radius: 9px;
+  }
 
-/* An editing row is the exception: it grows to hold the fields, so it stops
-   centring and goes back to a block. */
-.preset-list li.editing {
-  align-items: stretch;
-}
+  /* An editing row is the exception: it grows to hold the fields, so it stops
+     centring and goes back to a block. */
+  .preset-list li.editing {
+    align-items: stretch;
+  }
 
-.preset-list li:hover:not(.editing) {
-  background: var(--line-soft);
-}
+  .preset-list li:hover:not(.editing) {
+    background: var(--line-soft);
+  }
 
-.preset-list li.editing {
-  background: var(--panel-2);
-  border: 1px solid var(--line);
-  padding: 12px;
-}
+  .preset-list li.editing {
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    padding: 12px;
+  }
 
-.preset-actions {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  flex-shrink: 0;
-  opacity: 0;
-  transition: opacity 0.12s ease;
-}
+  .preset-actions {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    flex-shrink: 0;
+    opacity: 0;
+    transition: opacity 0.12s ease;
+  }
 
-.preset-list li:hover .preset-actions,
-.preset-list li:focus-within .preset-actions {
-  opacity: 1;
-}
+  .preset-list li:hover .preset-actions,
+  .preset-list li:focus-within .preset-actions {
+    opacity: 1;
+  }
 
-.preset-edit,
-.preset-new {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  width: 100%;
-}
+  .preset-edit,
+  .preset-new {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+  }
 
-.preset-new {
-  margin-top: 20px;
-  padding-top: 18px;
-  border-top: 1px solid var(--line-soft);
-}
+  .preset-new {
+    margin-top: 20px;
+    padding-top: 18px;
+    border-top: 1px solid var(--line-soft);
+  }
 
-.preset-edit input,
-.preset-edit textarea,
-.preset-new input,
-.preset-new textarea {
-  width: 100%;
-  padding: 8px 11px;
-  border-radius: 8px;
-  border: 1px solid var(--line);
-  background: var(--panel);
-  font-size: 12.5px;
-  line-height: 1.5;
-  outline: none;
-  resize: vertical;
-  transition: border-color 0.12s ease;
-}
+  .preset-edit input,
+  .preset-edit textarea,
+  .preset-new input,
+  .preset-new textarea {
+    width: 100%;
+    padding: 8px 11px;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    background: var(--panel);
+    font-size: 12.5px;
+    line-height: 1.5;
+    outline: none;
+    resize: vertical;
+    transition: border-color 0.12s ease;
+  }
 
-.preset-edit input:focus,
-.preset-edit textarea:focus,
-.preset-new input:focus,
-.preset-new textarea:focus {
-  border-color: var(--accent);
-}
+  .preset-edit input:focus,
+  .preset-edit textarea:focus,
+  .preset-new input:focus,
+  .preset-new textarea:focus {
+    border-color: var(--accent);
+  }
 
-.preset-edit-foot {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
+  .preset-edit-foot {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
 
-.preset-body {
-  min-width: 0;
-  flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
+  .preset-body {
+    min-width: 0;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 
-.preset-label {
-  font-size: 12.5px;
-  font-weight: 550;
-}
+  .preset-label {
+    font-size: 12.5px;
+    font-weight: 550;
+  }
 
-.preset-prompt {
-  font-size: 11.5px;
-  line-height: 1.45;
-  color: var(--muted);
-}
-
-.preset-empty {
-  color: var(--muted);
-  font-size: 12px;
+  .preset-empty {
+    color: var(--muted);
+    font-size: 12px;
+  }
 }

@@ -1,4 +1,4 @@
-import "./error-state.css";
+import { cn } from "~/utils/classname";
 
 interface Props {
   title: string;
@@ -41,11 +41,13 @@ export function ErrorState(props: Props) {
   const hint = diagnose(detail);
 
   return (
-    <div className="error-state">
-      <h2>{title}</h2>
-      <p className="error-message">{detail}</p>
+    <div className="mx-auto max-w-[460px] px-8 py-20 text-center">
+      <h2 className="mb-[10px] font-serif text-[21px] font-semibold tracking-[-0.015em]">
+        {title}
+      </h2>
+      <p className="mb-2 text-[13.5px] leading-[1.55] break-words text-bad">{detail}</p>
       {hint ? <p className="fine">{hint}</p> : null}
-      <div className="error-actions">
+      <div className="mt-5 flex justify-center gap-2">
         {onRetry ? (
           <button type="button" className="primary-button" onClick={onRetry}>
             {retryLabel ?? "Try again"}
@@ -62,13 +64,22 @@ export function ErrorState(props: Props) {
 }
 
 /// Compact variant for errors that appear inside a pane that still has content.
-export function InlineError(props: { message: string; onRetry?: () => void }) {
-  const { message, onRetry } = props;
+export function InlineError(props: {
+  message: string;
+  onRetry?: () => void;
+  className?: string;
+}) {
+  const { message, onRetry, className } = props;
   return (
-    <div className="inline-error">
+    <div
+      className={cn(
+        "my-[10px] flex items-center gap-[10px] rounded-lg bg-[color-mix(in_srgb,var(--bad)_10%,transparent)] px-3 py-[9px] text-[12.5px] leading-[1.5] break-words text-bad",
+        className,
+      )}
+    >
       <span>{readable(message)}</span>
       {onRetry ? (
-        <button type="button" onClick={onRetry}>
+        <button type="button" className="ml-auto whitespace-nowrap underline" onClick={onRetry}>
           Retry
         </button>
       ) : null}

@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import { useApp } from "~/stores/app";
 import { Markdown } from "~/components/markdown/markdown";
 import { OutputSkeleton } from "~/components/ui/skeleton";
-import { ErrorState } from "~/components/ui/error-state";
+import { ErrorState, InlineError } from "~/components/ui/error-state";
 import { Tooltip } from "~/components/ui/tooltip";
 import { countWords, mergeSourceRuns, minutes, renderLevel } from "~/utils/digest";
 import { formatDuration } from "~/utils/format";
@@ -209,12 +209,7 @@ export function RundownView() {
       </div>
 
       {output.error ? (
-        <div className="inline-error">
-          <span>{output.error}</span>
-          <button type="button" onClick={() => runOutput("rundown", true)}>
-            Retry
-          </button>
-        </div>
+        <InlineError message={output.error} onRetry={() => runOutput("rundown", true)} />
       ) : null}
 
       <article className="rundown-body" data-selection-source="rundown">

@@ -170,6 +170,7 @@ export function Sidebar() {
         {loading && stories.length === 0 ? <StoryListSkeleton /> : null}
         {error ? (
           <InlineError
+            className="mx-3"
             message={error}
             onRetry={() => (searching ? runSearch(searchQuery) : refreshFeed())}
           />

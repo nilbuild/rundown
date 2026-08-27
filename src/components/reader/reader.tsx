@@ -1,5 +1,3 @@
-import "./reader.css";
-
 import { useEffect, useRef } from "react";
 import { useApp } from "~/stores/app";
 import { ArticleView } from "~/components/article/article-view";
@@ -8,6 +6,7 @@ import { OutputView } from "~/components/digest/output-view";
 import { RundownView } from "~/components/rundown/rundown-view";
 import { openExternal } from "~/lib/api";
 import { CommentsSkeleton } from "~/components/ui/skeleton";
+import { cn } from "~/utils/classname";
 import { ErrorState } from "~/components/ui/error-state";
 import { compact, hnLink, timeAgo } from "~/utils/format";
 import type { Tab } from "~/stores/app";
@@ -115,17 +114,17 @@ export function Reader() {
 
   if (loading) {
     return (
-      <main className="reader">
+      <main className="flex min-h-0 min-w-0 flex-col bg-panel">
         {notice}
-        <header className="reader-head reader-head-loading" data-tauri-drag-region>
-          <div className="sk" style={{ width: "52%", height: 17 }} data-tauri-drag-region />
+        <header className="border-b border-line-soft px-8 pt-[15px] pb-[22px]" data-tauri-drag-region>
+          <div className="skeleton" style={{ width: "52%", height: 17 }} data-tauri-drag-region />
           <div
-            className="sk"
+            className="skeleton"
             style={{ width: "30%", height: 11, marginTop: 10 }}
             data-tauri-drag-region
           />
         </header>
-        <div className="reader-scroll">
+        <div className="flex-1 overflow-y-auto">
           <div className="comments">
             <CommentsSkeleton />
           </div>
@@ -136,7 +135,7 @@ export function Reader() {
 
   if (error) {
     return (
-      <main className="reader">
+      <main className="flex min-h-0 min-w-0 flex-col bg-panel">
         {notice}
         <ErrorState
           title="Could not load this thread"
@@ -149,7 +148,7 @@ export function Reader() {
 
   if (!thread) {
     return (
-      <main className="reader">
+      <main className="flex min-h-0 min-w-0 flex-col bg-panel">
         {notice}
         <div className="empty-state welcome">
           <h2>Pick a story</h2>
@@ -164,14 +163,22 @@ export function Reader() {
   }
 
   return (
-    <main className="reader">
+    <main className="flex min-h-0 min-w-0 flex-col bg-panel">
       {notice}
-      <header className="reader-head" data-tauri-drag-region>
+      <header className="border-b border-line-soft px-8 pt-[15px]" data-tauri-drag-region>
         {/* The title is the window's drag handle, as it would be on any Mac
             window. Opening the discussion moved to an explicit control below. */}
-        <h1 data-tauri-drag-region>{thread.title}</h1>
+        <h1
+          className="mb-1.5 cursor-default text-[17px] leading-[1.35] font-semibold tracking-[-0.012em]"
+          data-tauri-drag-region
+        >
+          {thread.title}
+        </h1>
 
-        <div className="reader-meta" data-tauri-drag-region>
+        <div
+          className="mb-2.5 flex flex-wrap gap-3 text-xs text-muted"
+          data-tauri-drag-region
+        >
           {thread.domain ? (
             <button
               type="button"
@@ -197,7 +204,7 @@ export function Reader() {
           </button>
         </div>
 
-        <nav className="tabs" data-tauri-drag-region>
+        <nav className="flex gap-0.5" data-tauri-drag-region>
           {TABS.map((entry) => {
             const output = outputs[entry.key as "digest" | "rundown"];
             const ready = Boolean(output?.text) && !output?.streaming;
@@ -206,20 +213,23 @@ export function Reader() {
               <button
                 key={entry.key}
                 type="button"
-                className={tab === entry.key ? "active" : ""}
+                className={cn(
+                  "relative -mb-px border-b-2 border-transparent px-3 pt-[7px] pb-[9px] text-[12.5px] text-muted not-disabled:hover:text-fg disabled:cursor-default disabled:opacity-35",
+                  tab === entry.key && "border-b-accent font-[550] text-fg",
+                )}
                 title={entry.hint}
                 onClick={() => setTab(entry.key)}
               >
                 {entry.label}
-                {working ? <span className="tab-dot working" /> : null}
-                {ready ? <span className="tab-dot" /> : null}
+                {working ? <span className="ml-[5px] inline-block size-1 rounded-full bg-accent align-middle animate-blink" /> : null}
+                {ready ? <span className="ml-[5px] inline-block size-1 rounded-full bg-accent align-middle" /> : null}
               </button>
             );
           })}
         </nav>
       </header>
 
-      <div className="reader-scroll" ref={scrollRef}>
+      <div className="flex-1 overflow-y-auto" ref={scrollRef}>
         {tab === "rundown" ? <RundownView /> : null}
         {tab === "article" ? <ArticleView /> : null}
         {tab === "comments" ? <CommentsView /> : null}

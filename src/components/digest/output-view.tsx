@@ -6,7 +6,7 @@ import { formatDuration } from "~/utils/format";
 import { OutputSkeleton } from "~/components/ui/skeleton";
 import { Tooltip } from "~/components/ui/tooltip";
 import { DigestReader } from "~/components/digest/digest-reader";
-import { ErrorState } from "~/components/ui/error-state";
+import { ErrorState, InlineError } from "~/components/ui/error-state";
 import type { OutputKind, VerifyReport } from "~/types";
 import { Menu } from "~/components/ui/menu";
 import { ChevronDown } from "lucide-react";
@@ -151,12 +151,7 @@ export function OutputView(props: Props) {
       </div>
 
       {output.error ? (
-        <div className="inline-error">
-          <span>{output.error}</span>
-          <button type="button" onClick={() => runOutput(kind, true)}>
-            Retry
-          </button>
-        </div>
+        <InlineError message={output.error} onRetry={() => runOutput(kind, true)} />
       ) : null}
 
       <div className="output-body" data-selection-source={kind}>

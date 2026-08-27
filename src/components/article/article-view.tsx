@@ -125,7 +125,7 @@ export function ArticleView() {
         {brief.streaming && !brief.text ? (
           <div className="brief-loading">
             <span className="pulse" />
-            <SkeletonLines widths={[96, 88, 54]} height={11} gap={8} />
+            <SkeletonLines widths={[96, 88, 54]} height={11} gap={8} className="flex-1" />
           </div>
         ) : null}
 

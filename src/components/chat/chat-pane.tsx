@@ -1,3 +1,4 @@
+import { InlineError } from "~/components/ui/error-state";
 import "./chat-pane.css";
 
 import { useEffect, useRef, useState } from "react";
@@ -207,7 +208,7 @@ export function ChatPane() {
           </div>
         ) : null}
 
-        {error ? <div className="inline-error">{error}</div> : null}
+        {error ? <InlineError message={error} /> : null}
       </div>
 
       {!pinned && (busy || messages.length > 0) ? (
