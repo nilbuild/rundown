@@ -26,7 +26,7 @@ export class ErrorBoundary extends Component<Props, State> {
     }
 
     return (
-      <div className="mx-auto max-w-[440px] px-8 py-[90px] text-center [&_h2]:mb-2 [&_h2]:font-serif [&_h2]:text-[22px] [&_h2]:font-semibold [&_h2]:tracking-[-0.015em] [&_p]:mb-5 [&_p]:text-[13.5px] [&_p]:leading-[1.6] [&_p]:text-muted pt-[140px]">
+      <div className="mx-auto max-w-[420px] px-8 py-[90px] text-center text-balance [&_h2]:mb-2 [&_h2]:font-serif [&_h2]:text-[22px] [&_h2]:font-semibold [&_h2]:tracking-[-0.015em] [&_p]:mb-5 [&_p]:text-[13.5px] [&_p]:leading-[1.6] [&_p]:text-muted pt-[140px]">
         <h2>Something broke</h2>
         <p>{this.state.message}</p>
         <PrimaryButton onClick={() => window.location.reload()}>

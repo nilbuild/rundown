@@ -157,7 +157,7 @@ export function CommandPalette() {
 
   return (
     <div
-      className="fixed inset-0 z-100 flex justify-center bg-black/28 pt-[14vh] backdrop-blur-[2px]"
+      className="fixed inset-0 z-100 flex items-start justify-center bg-black/28 pt-[14vh] backdrop-blur-[2px]"
       onMouseDown={() => setOpen(false)}
     >
       <div

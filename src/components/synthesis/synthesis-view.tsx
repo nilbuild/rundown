@@ -117,11 +117,11 @@ export function SynthesisView() {
           ) : null}
 
           {!text && !busy && !error ? (
-            <div className="mx-auto max-w-[440px] px-8 py-[90px] text-center [&_h2]:mb-2 [&_h2]:font-serif [&_h2]:text-[22px] [&_h2]:font-semibold [&_h2]:tracking-[-0.015em] [&_p]:mb-5 [&_p]:text-[13.5px] [&_p]:leading-[1.6] [&_p]:text-muted">
+            <div className="mx-auto max-w-[420px] px-8 py-[90px] text-center text-balance [&_h2]:mb-2 [&_h2]:font-serif [&_h2]:text-[22px] [&_h2]:font-semibold [&_h2]:tracking-[-0.015em] [&_p]:mb-5 [&_p]:text-[13.5px] [&_p]:leading-[1.6] [&_p]:text-muted">
               <h2 className="mb-2.5 text-[11px] font-[650] tracking-[0.06em] text-muted uppercase">Read several threads at once</h2>
               <p>
-                Pick two or more stories in the Library and this finds what they have in common,
-                where they contradict each other, and the question none of them answers.
+                Pick two or more stories in the Library to find what they share, and where
+                they contradict each other.
               </p>
               <PrimaryButton
                

@@ -151,11 +151,11 @@ export function Reader() {
     return (
       <main className="flex min-h-0 min-w-0 flex-col bg-panel">
         {notice}
-        <div className="mx-auto max-w-[440px] px-8 py-[90px] text-center [&_h2]:mb-2 [&_h2]:font-serif [&_h2]:text-[22px] [&_h2]:font-semibold [&_h2]:tracking-[-0.015em] [&_p]:mb-5 [&_p]:text-[13.5px] [&_p]:leading-[1.6] [&_p]:text-muted pt-[140px]">
+        <div className="mx-auto max-w-[420px] px-8 py-[90px] text-center text-balance [&_h2]:mb-2 [&_h2]:font-serif [&_h2]:text-[22px] [&_h2]:font-semibold [&_h2]:tracking-[-0.015em] [&_p]:mb-5 [&_p]:text-[13.5px] [&_p]:leading-[1.6] [&_p]:text-muted pt-[140px]">
           <h2>Pick a story</h2>
           <p>
-            Read the article, read the thread, or ask for a digest of what people actually argued.
-            Every quote in a digest is checked against the comment it came from.
+            Read it, or have it read for you. Every quote is checked against the comment it
+            came from.
           </p>
           <p className="text-xs leading-[1.5] text-muted">⌘K for the command palette · j and k move through the list</p>
         </div>
@@ -238,7 +238,7 @@ export function Reader() {
           <OutputView
             kind="digest"
             emptyTitle="Digest this thread"
-            emptyBody="Themed takes with the sharpest quotes, who said them, and a link back to each comment. Disagreements are kept as disagreements."
+            emptyBody="The sharpest quotes, who said them, and a link back. Disagreements stay disagreements."
             actionLabel="Read the thread for me"
           />
         ) : null}

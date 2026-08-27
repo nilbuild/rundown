@@ -4,7 +4,6 @@ import { Markdown } from "~/components/markdown/markdown";
 import { OutputSkeleton } from "~/components/ui/output-skeleton";
 import { ErrorState } from "~/components/ui/error-state";
 import { InlineError } from "~/components/ui/inline-error";
-import { Tooltip } from "~/components/ui/tooltip";
 import { countWords, mergeSourceRuns, minutes, renderLevel } from "~/utils/digest";
 import { formatDuration } from "~/utils/format";
 import type { ReadLevel } from "~/lib/api/settings";
@@ -16,22 +15,6 @@ import { LinkButton } from "~/components/ui/link-button";
 import { PrimaryButton } from "~/components/ui/primary-button";
 import { cn } from "~/utils/classname";
 
-function countSources(markdown: string) {
-  const seen = new Set<number>();
-  const pattern = /\]\(hn:([\d,\s]+)\)/g;
-  let match = pattern.exec(markdown);
-  while (match) {
-    for (const part of match[1].split(",")) {
-      const id = Number(part.trim());
-      if (Number.isFinite(id) && id > 0) {
-        seen.add(id);
-      }
-    }
-    match = pattern.exec(markdown);
-  }
-  return seen.size;
-}
-
 const LEVELS: { key: ReadLevel; label: string; hint: string }[] = [
   { key: "gist", label: "Gist", hint: "The opening line and the headings" },
   { key: "skim", label: "Skim", hint: "Each section's point, without the elaboration" },
@@ -40,7 +23,6 @@ const LEVELS: { key: ReadLevel; label: string; hint: string }[] = [
 
 export function RundownView() {
   const output = useApp((state) => state.outputs.rundown);
-  const thread = useApp((state) => state.thread);
   const coverage = useApp((state) => state.coverage);
   const prefetching = useApp((state) => state.prefetching);
   const prefetchPending = useApp((state) => state.prefetchPending);
@@ -54,7 +36,6 @@ export function RundownView() {
     [output.text, readLevel],
   );
   const body = useMemo(() => mergeSourceRuns(levelled), [levelled]);
-  const sourceCount = useMemo(() => countSources(output.text), [output.text]);
 
   // Each level's cost, measured rather than guessed, so the choice is informed.
   const levelTimes = useMemo(() => {
@@ -91,12 +72,11 @@ export function RundownView() {
 
   if (!output.text && !output.streaming && !output.error) {
     return (
-      <div className="mx-auto max-w-[440px] px-8 py-[90px] text-center [&_h2]:mb-2 [&_h2]:font-serif [&_h2]:text-[22px] [&_h2]:font-semibold [&_h2]:tracking-[-0.015em] [&_p]:mb-5 [&_p]:text-[13.5px] [&_p]:leading-[1.6] [&_p]:text-muted">
+      <div className="mx-auto max-w-[420px] px-8 py-[90px] text-center text-balance [&_h2]:mb-2 [&_h2]:font-serif [&_h2]:text-[22px] [&_h2]:font-semibold [&_h2]:tracking-[-0.015em] [&_p]:mb-5 [&_p]:text-[13.5px] [&_p]:leading-[1.6] [&_p]:text-muted">
         <h2>What's the story here?</h2>
         <p>
-          One account of the subject, merging the article with what the thread knows, in plain
-          words. Each claim carries a small marker — hover it to read the comment behind the
-          claim, so you only open the thread when you want to.
+          The article and the thread as one account, in plain words. Hover any marker to read
+          the comment behind a claim.
         </p>
         <PrimaryButton onClick={() => runOutput("rundown")}>
           Write it up
@@ -156,19 +136,6 @@ export function RundownView() {
                 </button>
               ))}
             </div>
-            {sourceCount > 0 ? (
-              <Tooltip
-                label={
-                  thread
-                    ? `This briefing draws on ${sourceCount} of the thread's ${thread.comment_count} comments. Point at a marker to read one.`
-                    : "Point at a marker to read the comment behind a claim."
-                }
-              >
-                <span className="cursor-default border-b border-dotted border-line text-muted">
-                  cites {sourceCount} {sourceCount === 1 ? "comment" : "comments"}
-                </span>
-              </Tooltip>
-            ) : null}
             {report && report.problems > 0 ? (
               <span className="rounded-full bg-[color-mix(in_srgb,var(--bad)_12%,transparent)] px-2 py-0.5 text-[11.5px] font-[550] text-bad">{report.problems} sources not in this thread</span>
             ) : null}

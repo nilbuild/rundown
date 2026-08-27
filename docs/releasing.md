@@ -55,6 +55,22 @@ there is no way to re-sign for a public key that is already in the wild. The onl
 way out is shipping a new version with a new key, which everyone has to download
 by hand.
 
+## Building locally
+
+`createUpdaterArtifacts` is on, so a local `pnpm tauri build` ends with:
+
+```
+A public key has been found, but no private key.
+```
+
+The `.app` and `.dmg` are already built by that point — only the update bundle
+is skipped, and nothing local needs it. To silence it, point the build at the
+key:
+
+```sh
+TAURI_SIGNING_PRIVATE_KEY_PATH=~/.rundown-updater.key pnpm tauri build
+```
+
 ## What is not built
 
 macOS only, on purpose. The window uses an overlay title bar and the sidebar
