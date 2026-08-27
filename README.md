@@ -1,8 +1,8 @@
-# Sift
+# Rundown
 
 A macOS Hacker News client that reads threads for you, and can prove it read them.
 
-Sift is built around one idea: an AI summary of a discussion is only useful if you can
+Rundown is built around one idea: an AI summary of a discussion is only useful if you can
 get back to the actual sentence someone wrote. Every quote in a generated digest carries
 its author and its comment id, and every one of them is checked against the real thread
 before you see it. Quotes that cannot be found are labelled, not quietly shipped.
@@ -117,7 +117,7 @@ Requires Node 20+, Rust, and at least one of the `claude` or `codex` CLIs on you
 pnpm install
 pnpm test               # frontend unit tests
 pnpm tauri dev          # development
-pnpm tauri build        # produces src-tauri/target/release/bundle/macos/Sift.app
+pnpm tauri build        # produces src-tauri/target/release/bundle/macos/Rundown.app
 ```
 
 To check the pipeline end to end against a real thread without opening the app:
@@ -183,5 +183,5 @@ pnpm tauri icon /tmp/icon.png && rm -rf src-tauri/icons/android src-tauri/icons/
 ## Data
 
 Threads, articles, generated output, and chat sessions live in one SQLite file at
-`~/Library/Application Support/sift/sift.sqlite3`. Nothing leaves the machine except the
+`~/Library/Application Support/rundown/rundown.sqlite3`. Nothing leaves the machine except the
 text sent to the model you picked.

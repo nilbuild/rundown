@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Sift",
+  "productName": "Rundown",
   "version": "0.1.0",
-  "identifier": "com.kamrify.sift",
+  "identifier": "com.kamrify.rundown",
   "build": {
     "beforeDevCommand": "pnpm dev",
     "devUrl": "http://localhost:1420",
@@ -13,7 +13,7 @@
     "windows": [
       {
         "label": "main",
-        "title": "Sift",
+        "title": "Rundown",
         "width": 1440,
         "height": 920,
         "minWidth": 900,

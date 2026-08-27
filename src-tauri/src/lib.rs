@@ -791,5 +791,5 @@ pub fn run() {
             data_location,
         ])
         .run(tauri::generate_context!())
-        .expect("error while running sift");
+        .expect("error while running rundown");
 }

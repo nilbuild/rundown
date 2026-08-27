@@ -16,7 +16,7 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
-    console.error("sift crashed", error, info.componentStack);
+    console.error("rundown crashed", error, info.componentStack);
   }
 
   render() {

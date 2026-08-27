@@ -1,5 +1,5 @@
 //! Load a thread the way the app does and report which upstream served it.
-use sift_lib::hn;
+use rundown_lib::hn;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {

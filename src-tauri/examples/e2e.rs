@@ -4,7 +4,7 @@
 //!
 //! cargo run --example e2e -- <story_id> [model]
 
-use sift_lib::{article, hn, prompts, verify};
+use rundown_lib::{article, hn, prompts, verify};
 use std::io::Write;
 use std::process::{Command, Stdio};
 
@@ -13,7 +13,7 @@ async fn main() -> anyhow::Result<()> {
     let mut args = std::env::args().skip(1);
     let story_id: u64 = args.next().unwrap_or_else(|| "49273478".into()).parse()?;
     let model = args.next().unwrap_or_else(|| "sonnet".into());
-    let provider = std::env::var("SIFT_PROVIDER").unwrap_or_else(|_| "claude".into());
+    let provider = std::env::var("RUNDOWN_PROVIDER").unwrap_or_else(|_| "claude".into());
     // Re-check an already-generated digest instead of paying for a new one.
     let replay = args.next();
 

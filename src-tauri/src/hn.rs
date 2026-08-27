@@ -18,7 +18,7 @@ pub fn client() -> &'static reqwest::Client {
     static CLIENT: OnceLock<reqwest::Client> = OnceLock::new();
     CLIENT.get_or_init(|| {
         reqwest::Client::builder()
-            .user_agent("sift/0.1 (macOS Hacker News client)")
+            .user_agent("rundown/0.1 (macOS Hacker News client)")
             .timeout(Duration::from_secs(25))
             .build()
             .expect("http client")

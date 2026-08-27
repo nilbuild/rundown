@@ -129,11 +129,11 @@ impl Registry {
     }
 }
 
+/// Hangs off `store::data_dir` rather than rebuilding the path, so this can
+/// never create the data directory ahead of the Sift migration and leave it
+/// deciding there was nothing to carry over.
 fn workdir() -> std::path::PathBuf {
-    let base = dirs::data_dir()
-        .unwrap_or_else(std::env::temp_dir)
-        .join("sift")
-        .join("runs");
+    let base = crate::store::data_dir().join("runs");
     let _ = std::fs::create_dir_all(&base);
     base
 }

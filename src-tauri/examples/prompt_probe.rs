@@ -1,5 +1,5 @@
 //! Show exactly what a rundown prompt contains for a real story.
-use sift_lib::{article, hn, prompts};
+use rundown_lib::{article, hn, prompts};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {

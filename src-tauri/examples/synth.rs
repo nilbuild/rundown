@@ -1,7 +1,7 @@
 //! Build a real cross-thread synthesis from the local library and run it.
 //! cargo run --release --example synth -- <model> <story_id> <story_id> ...
 
-use sift_lib::{hn, prompts, store::Store};
+use rundown_lib::{hn, prompts, store::Store};
 use std::io::Write;
 use std::process::{Command, Stdio};
 

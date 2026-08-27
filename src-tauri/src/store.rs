@@ -11,11 +11,38 @@ pub struct Store {
 }
 
 pub fn data_dir() -> PathBuf {
-    let dir = dirs::data_dir()
-        .unwrap_or_else(std::env::temp_dir)
-        .join("sift");
+    let root = dirs::data_dir().unwrap_or_else(std::env::temp_dir);
+    let dir = root.join("rundown");
+    if !dir.exists() {
+        adopt_sift(&root, &dir);
+    }
     let _ = std::fs::create_dir_all(&dir);
     dir
+}
+
+/// The app was called Sift until it was renamed. Everything the reader has —
+/// cached threads, generated output, chats, presets, the library index — lives
+/// in one directory beside one database, so the rename carries them across
+/// instead of starting empty next to them.
+///
+/// The write-ahead log matters here: SQLite keeps uncheckpointed pages in the
+/// `-wal` sidecar, and moving the database without it discards every write
+/// since the last checkpoint. On a machine that has been reading all day that
+/// is most of the session.
+fn adopt_sift(root: &std::path::Path, dir: &PathBuf) {
+    let old = root.join("sift");
+    if !old.is_dir() {
+        return;
+    }
+    if std::fs::rename(&old, dir).is_err() {
+        return;
+    }
+    for suffix in ["", "-wal", "-shm"] {
+        let from = dir.join(format!("sift.sqlite3{suffix}"));
+        if from.exists() {
+            let _ = std::fs::rename(from, dir.join(format!("rundown.sqlite3{suffix}")));
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -80,7 +107,7 @@ fn now() -> i64 {
 
 impl Store {
     pub fn open() -> Result<Self> {
-        let path = data_dir().join("sift.sqlite3");
+        let path = data_dir().join("rundown.sqlite3");
         let conn = Connection::open(path)?;
         conn.pragma_update(None, "journal_mode", "WAL")?;
         conn.pragma_update(None, "synchronous", "NORMAL")?;

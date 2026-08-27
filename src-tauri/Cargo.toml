@@ -1,5 +1,5 @@
 [package]
-name = "sift"
+name = "rundown"
 version = "0.1.0"
 description = "An AI-native Hacker News client"
 authors = ["Kamran Ahmed"]
@@ -11,7 +11,7 @@ edition = "2021"
 # The `_lib` suffix may seem redundant but it is necessary
 # to make the lib name unique and wouldn't conflict with the bin name.
 # This seems to be only an issue on Windows, see https://github.com/rust-lang/cargo/issues/8519
-name = "sift_lib"
+name = "rundown_lib"
 # staticlib/cdylib are only needed for mobile targets; this app is macOS only,
 # and the static archive alone costs about a gigabyte to link.
 crate-type = ["rlib"]

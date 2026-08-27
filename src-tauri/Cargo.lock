@@ -3379,6 +3379,33 @@ dependencies = [
 ]
 
 [[package]]
+name = "rundown"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "dirs",
+ "dom_query 0.28.0",
+ "dom_smoothie",
+ "ego-tree",
+ "futures",
+ "htmd",
+ "html2md",
+ "once_cell",
+ "reqwest 0.12.28",
+ "rusqlite",
+ "scraper",
+ "serde",
+ "serde_json",
+ "tauri",
+ "tauri-build",
+ "tauri-plugin-opener",
+ "tauri-plugin-window-state",
+ "tokio",
+ "urlencoding",
+]
+
+[[package]]
 name = "rusqlite"
 version = "0.40.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3784,33 +3811,6 @@ name = "shlex"
 version = "2.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f8fadd59c855ef2080decdef8ff161eb6661b86933c9d82e5ba29dc602a55aba"
-
-[[package]]
-name = "sift"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "chrono",
- "dirs",
- "dom_query 0.28.0",
- "dom_smoothie",
- "ego-tree",
- "futures",
- "htmd",
- "html2md",
- "once_cell",
- "reqwest 0.12.28",
- "rusqlite",
- "scraper",
- "serde",
- "serde_json",
- "tauri",
- "tauri-build",
- "tauri-plugin-opener",
- "tauri-plugin-window-state",
- "tokio",
- "urlencoding",
-]
 
 [[package]]
 name = "signal-hook-registry"

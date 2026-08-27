@@ -1,5 +1,5 @@
 //! How often does packing actually drop comments, and what does it drop?
-use sift_lib::{hn, prompts, store::Store};
+use rundown_lib::{hn, prompts, store::Store};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {

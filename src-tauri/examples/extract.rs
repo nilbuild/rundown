@@ -2,7 +2,7 @@
 //!
 //! cargo run --release --example extract -- <url>
 
-use sift_lib::article;
+use rundown_lib::article;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
