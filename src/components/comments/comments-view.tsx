@@ -1,5 +1,3 @@
-import "./comments-view.css";
-
 import { memo, useEffect, useRef, useState } from "react";
 import { useApp } from "~/stores/app";
 import { Markdown } from "~/components/markdown/markdown";
@@ -7,6 +5,8 @@ import { hnLink, isoAgo } from "~/utils/format";
 import { openExternal } from "~/lib/api";
 import type { Comment } from "~/types";
 import { ArrowDown, ArrowUp, X } from "lucide-react";
+import { GhostButton, IconButton } from "~/components/ui/button";
+import { cn } from "~/utils/classname";
 
 interface RowProps {
   comment: Comment;
@@ -61,19 +61,28 @@ const Row = memo(function Row(props: RowProps) {
   const setSelection = useApp((state) => state.setSelection);
   const setChatOpen = useApp((state) => state.setChatOpen);
 
+  // The line descends from the control that folds this subtree: it starts just
+  // under the control and runs to the bottom of the last reply, centred on it
+  // (the card's 10px padding plus half a 16px button). Only a comment that
+  // actually has replies draws one.
   return (
-    <div className={`comment depth-${Math.min(comment.depth, 8)}`}>
+    <div className="group/comment relative before:absolute before:top-[26px] before:bottom-0 before:left-[18px] before:w-px before:bg-line before:content-[''] not-has-[>[data-replies]]:before:hidden">
       <div
         ref={cardRef}
         id={`comment-${comment.id}`}
-        className={`comment-card ${isTarget ? "targeted" : ""} ${isMatch ? "matched" : ""} ${
-          isNew && !seen ? "fresh" : ""
-        }`}
+        className={cn(
+          "group/card rounded-lg px-2.5 pt-2 pb-1.5 transition-[background] duration-500 hover:bg-line-soft",
+          isMatch && "bg-[color-mix(in_srgb,var(--accent)_8%,transparent)]",
+          // Unread comments get a wash that fades once they have been on
+          // screen. No accent bar.
+          isNew && !seen && "bg-[color-mix(in_srgb,var(--good)_7%,transparent)]",
+          isTarget && "bg-accent-soft shadow-[inset_0_0_0_1px_var(--accent)]",
+        )}
         data-selection-source="comment"
         data-comment-id={comment.id}
         data-author={comment.author ?? ""}
       >
-        <div className="comment-head">
+        <div className="mb-[3px] flex items-center gap-1.5 text-[11.5px] leading-4 text-muted">
           <button
             type="button"
             className="inline-flex size-4 shrink-0 items-center justify-center rounded border border-line pb-px text-xs leading-none font-medium text-muted tabular-nums hover:bg-line hover:text-fg"
@@ -82,15 +91,15 @@ const Row = memo(function Row(props: RowProps) {
           >
             {isCollapsed ? "+" : "–"}
           </button>
-          <span className="author">{comment.author ?? "unknown"}</span>
-          <span className="dot">·</span>
-          <span className="muted">{isoAgo(comment.created_at)}</span>
-          {isNew && !seen ? <span className="fresh-dot" title="Posted since your last visit" /> : null}
+          <span className="font-[550] text-fg-soft">{comment.author ?? "unknown"}</span>
+          <span className="opacity-50">·</span>
+          <span className="text-muted">{isoAgo(comment.created_at)}</span>
+          {isNew && !seen ? <span className="size-[5px] shrink-0 rounded-full bg-good" title="Posted since your last visit" /> : null}
           {isCollapsed && comment.subtree_size > 1 ? (
-            <span className="subtree">{comment.subtree_size} hidden</span>
+            <span className="text-[11px] text-accent">{comment.subtree_size} hidden</span>
           ) : null}
 
-          <div className="comment-actions">
+          <div className="ml-auto flex gap-0.5 opacity-0 transition-opacity duration-[120ms] group-hover/card:opacity-100 [&_button]:rounded-md [&_button]:border [&_button]:border-line [&_button]:bg-panel [&_button]:px-2 [&_button]:py-0.5 [&_button]:text-[11px] [&_button]:text-muted [&_button:hover]:bg-line [&_button:hover]:text-fg">
             <button
               type="button"
               onClick={() => {
@@ -115,11 +124,11 @@ const Row = memo(function Row(props: RowProps) {
           </div>
         </div>
 
-        {isCollapsed ? null : <Markdown source={comment.text} className="comment-body" />}
+        {isCollapsed ? null : <Markdown source={comment.text} className="pl-[22px] text-[13.5px] leading-[1.62] text-fg-soft [&_p]:mb-[0.7em] [&_blockquote]:mb-[0.7em] [&_blockquote]:border-l-2 [&_blockquote]:border-line [&_blockquote]:py-px [&_blockquote]:pl-3 [&_blockquote]:text-muted [&_blockquote_p:last-child]:mb-0" />}
       </div>
 
       {isCollapsed || comment.children.length === 0 ? null : (
-        <div className="comment-children">
+        <div data-replies className="pl-[30px]">
           {comment.children.map((child) => (
             <Row key={child.id} comment={child} />
           ))}
@@ -202,7 +211,7 @@ export function CommentsView() {
 
   if (thread.comments.length === 0) {
     return (
-      <div className="empty-state">
+      <div className="mx-auto max-w-[440px] px-8 py-[90px] text-center [&_h2]:mb-2 [&_h2]:font-serif [&_h2]:text-[22px] [&_h2]:font-semibold [&_h2]:tracking-[-0.015em] [&_p]:mb-5 [&_p]:text-[13.5px] [&_p]:leading-[1.6] [&_p]:text-muted">
         <h2>No comments yet</h2>
         <p>Nobody has replied to this submission.</p>
       </div>
@@ -215,10 +224,10 @@ export function CommentsView() {
   };
 
   return (
-    <div className="comments">
-      <div className="comments-toolbar">
+    <div className="max-w-[860px] px-8 pt-2 pb-[120px]">
+      <div className="sticky top-0 z-2 mb-1 flex items-center gap-2 bg-panel pt-2.5 pb-3">
         {searchOpen ? (
-          <div className="thread-search">
+          <div className="flex w-full items-center gap-1.5 [&_input]:h-7 [&_input]:flex-1 [&_input]:rounded-[7px] [&_input]:border [&_input]:border-accent [&_input]:bg-panel-2 [&_input]:px-2.5 [&_input]:text-[12.5px] [&_input]:outline-none [&_.text-muted]:min-w-[62px] [&_.text-muted]:text-right [&_.text-muted]:text-[11.5px] [&_.text-muted]:tabular-nums [&_.text-muted]:whitespace-nowrap">
             <input
               ref={searchRef}
               type="search"
@@ -239,48 +248,48 @@ export function CommentsView() {
                 }
               }}
             />
-            <span className="muted">
+            <span className="text-muted">
               {commentQuery.trim().length < 2
                 ? ""
                 : matchIds.length === 0
                   ? "no matches"
                   : `${matchIndex + 1} of ${matchIds.length}`}
             </span>
-            <button
-              type="button"
-              className="icon-button"
+            <IconButton
+             
+             
               title="Previous match (⇧enter)"
               onClick={() => stepMatch(-1)}
             >
               <ArrowUp size={13} strokeWidth={2} />
-            </button>
-            <button
-              type="button"
-              className="icon-button"
+            </IconButton>
+            <IconButton
+             
+             
               title="Next match (enter)"
               onClick={() => stepMatch(1)}
             >
               <ArrowDown size={13} strokeWidth={2} />
-            </button>
-            <button type="button" className="icon-button" title="Close find" onClick={closeSearch}>
+            </IconButton>
+            <IconButton title="Close find" onClick={closeSearch}>
               <X size={13} strokeWidth={2.2} />
-            </button>
+            </IconButton>
           </div>
         ) : (
           <>
-            <span className="muted">{thread.comment_count} comments</span>
+            <span className="text-muted">{thread.comment_count} comments</span>
             {unseenNew > 0 ? (
-              <span className="fresh-group">
+              <span className="group/fresh inline-flex items-center gap-px rounded-[20px] bg-[color-mix(in_srgb,var(--good)_14%,transparent)] pr-[3px]">
                 <button
                   type="button"
-                  className="fresh-jump"
+                  className="rounded-l-[20px] py-0.5 pr-1 pl-2.5 text-[11.5px] font-[550] text-good"
                   onClick={() => stepNew(1)}
                 >
                   {unseenNew} new
                 </button>
                 <button
                   type="button"
-                  className="fresh-dismiss"
+                  className="inline-flex size-[17px] items-center justify-center rounded-full text-good opacity-65 group-hover/fresh:bg-[color-mix(in_srgb,var(--good)_20%,transparent)] group-hover/fresh:opacity-100"
                   aria-label="Mark all as read"
                   onClick={() => markAllNewSeen()}
                 >
@@ -288,23 +297,23 @@ export function CommentsView() {
                 </button>
               </span>
             ) : newComments === 0 || newIds.length > 0 ? (
-              <span className="muted">nothing new</span>
+              <span className="text-muted">nothing new</span>
             ) : null}
-            <div className="spacer" />
-            <button
-              type="button"
-              className="ghost-button"
+            <div className="flex-1" />
+            <GhostButton
+             
+             
               title="Find in thread (⌘F)"
               onClick={() => setSearchOpen(true)}
             >
               Find
-            </button>
-            <button type="button" className="ghost-button" onClick={() => collapseAll()}>
+            </GhostButton>
+            <GhostButton onClick={() => collapseAll()}>
               Collapse all
-            </button>
-            <button type="button" className="ghost-button" onClick={() => expandAll()}>
+            </GhostButton>
+            <GhostButton onClick={() => expandAll()}>
               Expand all
-            </button>
+            </GhostButton>
           </>
         )}
       </div>

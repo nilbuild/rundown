@@ -99,7 +99,7 @@ export function Select(props: Props) {
       </div>
 
       <Autocomplete.Portal>
-        <Autocomplete.Positioner className="ui-layer" sideOffset={6}>
+        <Autocomplete.Positioner className="z-300" sideOffset={6}>
           <Autocomplete.Popup className="min-w-(--anchor-width) origin-(--transform-origin) rounded-[10px] border border-line bg-panel p-1 shadow-panel outline-none transition-[opacity,transform] duration-[120ms] data-[ending-style]:scale-97 data-[ending-style]:opacity-0 data-[starting-style]:scale-97 data-[starting-style]:opacity-0">
             <Autocomplete.Empty className="text-[11.5px] leading-[1.4] text-muted not-empty:px-[10px] not-empty:py-[7px]">
               No match — press ⏎ to use what you typed

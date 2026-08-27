@@ -1,8 +1,7 @@
-import "./command-palette.css";
-
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useApp } from "~/stores/app";
 import type { FeedName } from "~/types";
+import { cn } from "~/utils/classname";
 
 interface Command {
   id: string;
@@ -157,9 +156,16 @@ export function CommandPalette() {
   };
 
   return (
-    <div className="palette-backdrop" onMouseDown={() => setOpen(false)}>
-      <div className="palette" onMouseDown={(event) => event.stopPropagation()}>
+    <div
+      className="fixed inset-0 z-100 flex justify-center bg-black/28 pt-[14vh] backdrop-blur-[2px]"
+      onMouseDown={() => setOpen(false)}
+    >
+      <div
+        className="w-[560px] max-w-[90vw] overflow-hidden rounded-xl border border-line bg-panel shadow-panel"
+        onMouseDown={(event) => event.stopPropagation()}
+      >
         <input
+          className="w-full border-b border-line bg-transparent px-4 py-3.5 text-sm outline-none"
           ref={inputRef}
           value={query}
           placeholder="Run a command, or type ? to search Hacker News"
@@ -187,15 +193,15 @@ export function CommandPalette() {
           }}
         />
 
-        <div className="palette-list">
+        <div className="max-h-[340px] overflow-y-auto p-1.5">
           {searchMode ? (
-            <div className="palette-row active">
+            <div className="flex w-full items-center gap-2.5 rounded-[7px] px-2.5 py-2 text-left text-[13px] bg-accent-soft text-accent">
               <span>Search Hacker News for “{query.trim().slice(1).trim()}”</span>
             </div>
           ) : null}
 
           {!searchMode && filtered.length === 0 ? (
-            <div className="palette-row muted">No matching command</div>
+            <div className="flex w-full items-center gap-2.5 rounded-[7px] px-2.5 py-2 text-left text-[13px] text-muted">No matching command</div>
           ) : null}
 
           {!searchMode
@@ -203,12 +209,12 @@ export function CommandPalette() {
                 <button
                   key={command.id}
                   type="button"
-                  className={`palette-row ${index === cursor ? "active" : ""}`}
+                  className={cn("flex w-full items-center gap-2.5 rounded-[7px] px-2.5 py-2 text-left text-[13px]", index === cursor && "bg-accent-soft text-accent")}
                   onMouseEnter={() => setCursor(index)}
                   onClick={commit}
                 >
                   <span>{command.label}</span>
-                  {command.hint ? <kbd>{command.hint}</kbd> : null}
+                  {command.hint ? <kbd className="ml-auto rounded border border-line px-[5px] py-px font-ui text-[11px] text-muted">{command.hint}</kbd> : null}
                 </button>
               ))
             : null}

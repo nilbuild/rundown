@@ -10,6 +10,7 @@ import { cn } from "~/utils/classname";
 import { ErrorState } from "~/components/ui/error-state";
 import { compact, hnLink, timeAgo } from "~/utils/format";
 import type { Tab } from "~/stores/app";
+import { LinkButton } from "~/components/ui/button";
 
 const TABS: { key: Tab; label: string; hint: string }[] = [
   { key: "rundown", label: "Briefing", hint: "The whole story in plain words" },
@@ -37,7 +38,7 @@ export function Reader() {
     (provider === "claude" ? !providerStatus.claude : !providerStatus.codex);
 
   const notice = providerMissing ? (
-    <div className="notice">
+    <div className="flex items-center gap-2.5 border-b border-line bg-[color-mix(in_srgb,var(--bad)_12%,transparent)] px-8 py-2 text-[12.5px] text-bad [&_button]:ml-auto [&_button]:text-inherit [&_button]:underline">
       <span>
         The <code>{provider}</code> command was not found on your PATH, so nothing can be generated.
       </span>
@@ -125,7 +126,7 @@ export function Reader() {
           />
         </header>
         <div className="flex-1 overflow-y-auto">
-          <div className="comments">
+          <div className="max-w-[860px] px-8 pt-2 pb-[120px]">
             <CommentsSkeleton />
           </div>
         </div>
@@ -150,13 +151,13 @@ export function Reader() {
     return (
       <main className="flex min-h-0 min-w-0 flex-col bg-panel">
         {notice}
-        <div className="empty-state welcome">
+        <div className="mx-auto max-w-[440px] px-8 py-[90px] text-center [&_h2]:mb-2 [&_h2]:font-serif [&_h2]:text-[22px] [&_h2]:font-semibold [&_h2]:tracking-[-0.015em] [&_p]:mb-5 [&_p]:text-[13.5px] [&_p]:leading-[1.6] [&_p]:text-muted pt-[140px]">
           <h2>Pick a story</h2>
           <p>
             Read the article, read the thread, or ask for a digest of what people actually argued.
             Every quote in a digest is checked against the comment it came from.
           </p>
-          <p className="fine">⌘K for the command palette · j and k move through the list</p>
+          <p className="text-xs leading-[1.5] text-muted">⌘K for the command palette · j and k move through the list</p>
         </div>
       </main>
     );
@@ -180,13 +181,13 @@ export function Reader() {
           data-tauri-drag-region
         >
           {thread.domain ? (
-            <button
-              type="button"
-              className="link"
+            <LinkButton
+             
+             
               onClick={() => thread.url && openExternal(thread.url)}
             >
               {thread.domain} ↗
-            </button>
+            </LinkButton>
           ) : null}
           {thread.points !== null ? (
             <span data-tauri-drag-region>{compact(thread.points)} points</span>
@@ -194,14 +195,14 @@ export function Reader() {
           {thread.author ? <span data-tauri-drag-region>by {thread.author}</span> : null}
           <span data-tauri-drag-region>{compact(thread.comment_count)} comments</span>
           {newComments && newComments > 0 ? (
-            <span className="new-badge" data-tauri-drag-region>
+            <span className="font-[550] text-accent" data-tauri-drag-region>
               {compact(newComments)} new since you last looked
             </span>
           ) : null}
           <span data-tauri-drag-region>{timeAgo(Date.parse(thread.created_at) / 1000)}</span>
-          <button type="button" className="link" onClick={() => openExternal(hnLink(thread.id))}>
+          <LinkButton onClick={() => openExternal(hnLink(thread.id))}>
             Discussion ↗
-          </button>
+          </LinkButton>
         </div>
 
         <nav className="flex gap-0.5" data-tauri-drag-region>
@@ -221,7 +222,7 @@ export function Reader() {
                 onClick={() => setTab(entry.key)}
               >
                 {entry.label}
-                {working ? <span className="ml-[5px] inline-block size-1 rounded-full bg-accent align-middle animate-blink" /> : null}
+                {working ? <span className="ml-[5px] inline-block size-1 rounded-full bg-accent align-middle animate-pulse-dot" /> : null}
                 {ready ? <span className="ml-[5px] inline-block size-1 rounded-full bg-accent align-middle" /> : null}
               </button>
             );

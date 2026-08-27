@@ -57,7 +57,7 @@ export function Menu(props: Props) {
       </Base.Trigger>
       <Base.Portal>
         <Base.Positioner
-          className="ui-layer"
+          className="z-300"
           side={side ?? "top"}
           align={align ?? "start"}
           sideOffset={8}

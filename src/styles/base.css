@@ -1,136 +1,143 @@
-/* Preflight is deliberately left out while the old stylesheets are still in
-   play: it would reset elements they rely on. It goes in once the last one is
-   gone, along with this file's own reset. */
-@layer theme, base, components, utilities;
-
-@import "tailwindcss/theme.css" layer(theme);
-@import "tailwindcss/utilities.css" layer(utilities);
+@import "tailwindcss";
 
 :root {
-  --bg: #f7f5f2;
-  --panel: #ffffff;
-  --panel-2: #fbfaf8;
-  --text: #1c1b1a;
-  --text-2: #4a4845;
-  --muted: #86827c;
-  --line: rgba(20, 18, 16, 0.1);
-  --line-soft: rgba(20, 18, 16, 0.06);
-  --accent: #c2521c;
-  --accent-soft: rgba(194, 82, 28, 0.1);
-  --good: #2f7d55;
-  --bad: #b4402c;
-  --sel: rgba(194, 82, 28, 0.16);
-  --shadow: 0 1px 2px rgba(0, 0, 0, 0.05), 0 12px 32px rgba(0, 0, 0, 0.1);
+--bg: #f7f5f2;
+--panel: #ffffff;
+--panel-2: #fbfaf8;
+--text: #1c1b1a;
+--text-2: #4a4845;
+--muted: #86827c;
+--line: rgba(20, 18, 16, 0.1);
+--line-soft: rgba(20, 18, 16, 0.06);
+--accent: #c2521c;
+--accent-soft: rgba(194, 82, 28, 0.1);
+--good: #2f7d55;
+--bad: #b4402c;
+--sel: rgba(194, 82, 28, 0.16);
+--shadow: 0 1px 2px rgba(0, 0, 0, 0.05), 0 12px 32px rgba(0, 0, 0, 0.1);
 
-  --ui: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
-  --serif: ui-serif, "New York", Charter, Georgia, serif;
-  --mono: ui-monospace, "SF Mono", Menlo, monospace;
+--ui: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+--serif: ui-serif, "New York", Charter, Georgia, serif;
+--mono: ui-monospace, "SF Mono", Menlo, monospace;
 
-  --sidebar-w: 328px;
-  --chat-w: 400px;
+--sidebar-w: 328px;
+--chat-w: 400px;
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #141416;
-    --panel: #1a1a1d;
-    --panel-2: #202024;
-    --text: #e9e7e4;
-    --text-2: #c2bfba;
-    --muted: #8b8781;
-    --line: rgba(255, 255, 255, 0.1);
-    --line-soft: rgba(255, 255, 255, 0.055);
-    --accent: #ff8248;
-    --accent-soft: rgba(255, 130, 72, 0.14);
-    --good: #5fbb87;
-    --bad: #ef7f68;
-    --sel: rgba(255, 130, 72, 0.22);
-    --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 16px 40px rgba(0, 0, 0, 0.5);
-  }
+:root {
+  --bg: #141416;
+  --panel: #1a1a1d;
+  --panel-2: #202024;
+  --text: #e9e7e4;
+  --text-2: #c2bfba;
+  --muted: #8b8781;
+  --line: rgba(255, 255, 255, 0.1);
+  --line-soft: rgba(255, 255, 255, 0.055);
+  --accent: #ff8248;
+  --accent-soft: rgba(255, 130, 72, 0.14);
+  --good: #5fbb87;
+  --bad: #ef7f68;
+  --sel: rgba(255, 130, 72, 0.22);
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 16px 40px rgba(0, 0, 0, 0.5);
+}
 }
 
 @theme {
-  --animate-shimmer: shimmer 1.5s ease-in-out infinite;
-  --animate-blink: blink 1.3s ease-in-out infinite;
+--animate-shimmer: shimmer 1.5s ease-in-out infinite;
+--animate-spin-slow: spin-slow 0.85s linear infinite;
+--animate-pulse-dot: pulse-dot 1.3s ease-in-out infinite;
+--animate-caret: caret 1s steps(2) infinite;
 
-  @keyframes blink {
-    0%,
-    100% {
-      opacity: 0.25;
-    }
-    50% {
-      opacity: 1;
-    }
+@keyframes spin-slow {
+  to {
+    transform: rotate(360deg);
   }
+}
 
-  @keyframes shimmer {
-    100% {
-      transform: translateX(100%);
-    }
+@keyframes pulse-dot {
+  0%,
+  100% {
+    opacity: 0.25;
   }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes caret {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
 }
 
 @utility skeleton {
-  position: relative;
-  overflow: hidden;
-  border-radius: 5px;
-  background: var(--line-soft);
+position: relative;
+overflow: hidden;
+border-radius: 5px;
+background: var(--line-soft);
 
+&::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--text) 7%, transparent),
+    transparent
+  );
+  animation: var(--animate-shimmer);
+}
+
+@media (prefers-reduced-motion: reduce) {
   &::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    transform: translateX(-100%);
-    background: linear-gradient(
-      90deg,
-      transparent,
-      color-mix(in srgb, var(--text) 7%, transparent),
-      transparent
-    );
-    animation: var(--animate-shimmer);
+    animation: none;
   }
-
-  @media (prefers-reduced-motion: reduce) {
-    &::after {
-      animation: none;
-    }
-  }
+}
 }
 
 @theme inline {
-  --color-bg: var(--bg);
-  --color-panel: var(--panel);
-  --color-panel-2: var(--panel-2);
-  --color-fg: var(--text);
-  --color-fg-soft: var(--text-2);
-  --color-muted: var(--muted);
-  --color-line: var(--line);
-  --color-line-soft: var(--line-soft);
-  --color-accent: var(--accent);
-  --color-accent-soft: var(--accent-soft);
-  --color-good: var(--good);
-  --color-bad: var(--bad);
-  --color-sel: var(--sel);
+--color-bg: var(--bg);
+--color-panel: var(--panel);
+--color-panel-2: var(--panel-2);
+--color-fg: var(--text);
+--color-fg-soft: var(--text-2);
+--color-muted: var(--muted);
+--color-line: var(--line);
+--color-line-soft: var(--line-soft);
+--color-accent: var(--accent);
+--color-accent-soft: var(--accent-soft);
+--color-good: var(--good);
+--color-bad: var(--bad);
+--color-sel: var(--sel);
 
-  --font-ui: var(--ui);
-  --font-serif: var(--serif);
-  --font-mono: var(--mono);
+--font-ui: var(--ui);
+--font-serif: var(--serif);
+--font-mono: var(--mono);
 
-  --shadow-panel: var(--shadow);
+--shadow-panel: var(--shadow);
 
-  --spacing-sidebar: var(--sidebar-w);
-  --spacing-chat: var(--chat-w);
+--spacing-sidebar: var(--sidebar-w);
+--spacing-chat: var(--chat-w);
 }
 @layer base {
-  * {
-    box-sizing: border-box;
-  }
-
   html,
   body,
   #root {
     height: 100%;
-    margin: 0;
   }
 
   body {
@@ -145,6 +152,15 @@
 
   ::selection {
     background: var(--sel);
+  }
+
+  button {
+    cursor: pointer;
+  }
+
+  button svg {
+    display: block;
+    flex-shrink: 0;
   }
 
   [data-tauri-drag-region] {
@@ -165,27 +181,6 @@
   [data-tauri-drag-region] input,
   [data-tauri-drag-region] textarea {
     cursor: text;
-  }
-
-  button {
-    font: inherit;
-    color: inherit;
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 0;
-  }
-
-  button svg {
-    display: block;
-    flex-shrink: 0;
-  }
-
-  input,
-  textarea,
-  select {
-    font: inherit;
-    color: inherit;
   }
 
   /* WebKit paints autofilled fields with its own background. It ignores
@@ -219,254 +214,14 @@
     appearance: none;
   }
 
-  .app {
-    display: grid;
-    grid-template-columns: var(--sidebar-w) minmax(0, 1fr);
-    height: 100%;
-  }
-
-  .app.with-chat {
-    grid-template-columns: var(--sidebar-w) minmax(0, 1fr) var(--chat-w);
-  }
-
-  .spacer {
-    flex: 1;
-  }
-
-  :focus {
-    outline: none;
-  }
-
   :focus-visible {
     outline: 2px solid var(--accent);
     outline-offset: 1px;
     border-radius: 5px;
   }
+}
 
-  .sentinel {
-    padding: 18px 0 6px;
-    text-align: center;
-    font-size: 11.5px;
-    color: var(--muted);
-  }
-
-  .notice {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 8px 32px;
-    background: color-mix(in srgb, var(--bad) 12%, transparent);
-    color: var(--bad);
-    font-size: 12.5px;
-    border-bottom: 1px solid var(--line);
-  }
-
-  .notice button {
-    color: inherit;
-    text-decoration: underline;
-    margin-left: auto;
-  }
-
-  .muted {
-    color: var(--muted);
-  }
-
-  .fine {
-    color: var(--muted);
-    font-size: 12px;
-    line-height: 1.5;
-  }
-
-  .hint {
-    color: var(--muted);
-    font-size: 13px;
-  }
-
-  .hint.pad {
-    padding: 28px 32px;
-  }
-
-  .hint.error,
-  .error {
-    color: var(--bad);
-  }
-
-  .label {
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--muted);
-  }
-
-  /* These read as plain text until you hover them, which is no use if you are
-     looking for the control rather than already pointing at it. They carry their
-     own surface at rest. */
-  .ghost-button {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    padding: 4px 10px;
-    border-radius: 7px;
-    font-size: 12px;
-    line-height: 1.35;
-    color: var(--text-2);
-    background: var(--line-soft);
-    border: 1px solid var(--line);
-    transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
-  }
-
-  .ghost-button:hover:not(:disabled) {
-    background: var(--line);
-    border-color: color-mix(in srgb, var(--accent) 40%, var(--line));
-    color: var(--text);
-  }
-
-  .ghost-button:disabled {
-    opacity: 0.45;
-    cursor: default;
-  }
-
-  .ghost-button.active {
-    background: var(--accent-soft);
-    color: var(--accent);
-  }
-
-  .ghost-button.danger:hover {
-    color: var(--bad);
-  }
-
-  .icon-button {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 26px;
-    height: 26px;
-    flex-shrink: 0;
-    border-radius: 7px;
-    color: var(--muted);
-    font-size: 12px;
-    line-height: 1;
-    background: var(--line-soft);
-    border: 1px solid var(--line);
-    transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease;
-  }
-
-  .icon-button:hover {
-    background: var(--line);
-    border-color: color-mix(in srgb, var(--accent) 40%, var(--line));
-    color: var(--text);
-  }
-
-  .primary-button.small {
-    padding: 5px 14px;
-    font-size: 12.5px;
-    border-radius: 7px;
-  }
-
-  .primary-button {
-    padding: 7px 15px;
-    border-radius: 8px;
-    background: var(--accent);
-    color: #fff;
-    font-size: 13px;
-    font-weight: 550;
-    transition: filter 0.12s ease;
-  }
-
-  .primary-button:hover:not(:disabled) {
-    filter: brightness(1.08);
-  }
-
-  .primary-button:disabled {
-    opacity: 0.4;
-    cursor: default;
-  }
-
-  button.link,
-  .md a {
-    color: var(--accent);
-    text-decoration: none;
-    border-bottom: 1px solid var(--accent-soft);
-  }
-
-  button.link:hover,
-  .md a:hover {
-    border-bottom-color: var(--accent);
-  }
-
-
-  /* Portalled popups are siblings of the modal backdrop in <body>, so without a
-     higher layer they render behind it and swallow every click. */
-  .ui-layer {
-    z-index: 300;
-  }
-
-  /* dialog */
-
-  .ui-backdrop {
-    position: fixed;
-    inset: 0;
-    z-index: 260;
-    background: rgba(0, 0, 0, 0.3);
-    backdrop-filter: blur(2px);
-    transition: opacity 0.16s ease;
-  }
-
-  .ui-backdrop[data-starting-style],
-  .ui-backdrop[data-ending-style] {
-    opacity: 0;
-  }
-
-  .ui-dialog {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    z-index: 270;
-    width: 560px;
-    max-width: 92vw;
-    max-height: 80vh;
-    overflow-y: auto;
-    padding: 20px 24px 24px;
-    border-radius: 12px;
-    border: 1px solid var(--line);
-    background: var(--panel);
-    box-shadow: var(--shadow);
-    outline: none;
-    transition: opacity 0.16s ease, transform 0.16s ease;
-  }
-
-  .ui-dialog[data-starting-style],
-  .ui-dialog[data-ending-style] {
-    opacity: 0;
-    transform: translate(-50%, -50%) scale(0.97);
-  }
-
-  .ui-dialog header {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 16px;
-    margin-bottom: 20px;
-  }
-
-  .ui-dialog-title {
-    font-size: 16px;
-    font-weight: 620;
-    margin: 0 0 4px;
-  }
-
-  .ui-dialog-sub {
-    font-size: 12px;
-    line-height: 1.5;
-    color: var(--muted);
-    margin: 0;
-    max-width: 44ch;
-  }
-
-  /* scrollbar */
-
+@layer base {
   ::-webkit-scrollbar {
     width: 9px;
     height: 9px;

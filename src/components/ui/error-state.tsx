@@ -1,4 +1,5 @@
 import { cn } from "~/utils/classname";
+import { GhostButton, PrimaryButton } from "~/components/ui/button";
 
 interface Props {
   title: string;
@@ -46,17 +47,17 @@ export function ErrorState(props: Props) {
         {title}
       </h2>
       <p className="mb-2 text-[13.5px] leading-[1.55] break-words text-bad">{detail}</p>
-      {hint ? <p className="fine">{hint}</p> : null}
+      {hint ? <p className="text-xs leading-[1.5] text-muted">{hint}</p> : null}
       <div className="mt-5 flex justify-center gap-2">
         {onRetry ? (
-          <button type="button" className="primary-button" onClick={onRetry}>
+          <PrimaryButton onClick={onRetry}>
             {retryLabel ?? "Try again"}
-          </button>
+          </PrimaryButton>
         ) : null}
         {secondary ? (
-          <button type="button" className="ghost-button" onClick={secondary.onClick}>
+          <GhostButton onClick={secondary.onClick}>
             {secondary.label}
-          </button>
+          </GhostButton>
         ) : null}
       </div>
     </div>

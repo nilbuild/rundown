@@ -1,5 +1,3 @@
-import "./output-view.css";
-
 import { useApp } from "~/stores/app";
 import { Markdown } from "~/components/markdown/markdown";
 import { formatDuration } from "~/utils/format";
@@ -11,6 +9,8 @@ import type { OutputKind, VerifyReport } from "~/types";
 import { Menu } from "~/components/ui/menu";
 import { ChevronDown } from "lucide-react";
 import { toPlainMarkdown, toPortableMarkdown } from "~/utils/export";
+import { GhostButton, PrimaryButton } from "~/components/ui/button";
+import { cn } from "~/utils/classname";
 
 interface Props {
   kind: OutputKind;
@@ -60,14 +60,14 @@ export function OutputView(props: Props) {
 
   if (!output.text && !output.streaming && !output.error) {
     return (
-      <div className="empty-state">
+      <div className="mx-auto max-w-[440px] px-8 py-[90px] text-center [&_h2]:mb-2 [&_h2]:font-serif [&_h2]:text-[22px] [&_h2]:font-semibold [&_h2]:tracking-[-0.015em] [&_p]:mb-5 [&_p]:text-[13.5px] [&_p]:leading-[1.6] [&_p]:text-muted">
         <h2>{emptyTitle}</h2>
         <p>{emptyBody}</p>
-        <button type="button" className="primary-button" onClick={() => runOutput(kind)}>
+        <PrimaryButton onClick={() => runOutput(kind)}>
           {actionLabel}
-        </button>
+        </PrimaryButton>
         {partial ? (
-          <p className="fine">
+          <p className="text-xs leading-[1.5] text-muted">
             This thread is large. {coverage!.included} of {coverage!.total} comments will be sent,
             chosen by length, replies, and depth.
           </p>
@@ -87,24 +87,29 @@ export function OutputView(props: Props) {
   }
 
   return (
-    <div className="output">
-      <div className="output-toolbar">
+    <div className="mx-auto max-w-[720px] px-8 pb-[120px]">
+      <div className="sticky top-0 z-2 flex items-center gap-2.5 bg-panel pt-3 pb-3.5 text-xs">
         {output.streaming ? (
           <>
-            <span className="pulse" />
-            <span className="muted">
+            <span className="size-[7px] shrink-0 rounded-full bg-accent animate-pulse-dot" />
+            <span className="text-muted">
               {prefetching && !output.text ? "Reading ahead…" : "Reading the thread…"}
             </span>
-            <div className="spacer" />
-            <button type="button" className="ghost-button" onClick={() => stopOutput(kind)}>
+            <div className="flex-1" />
+            <GhostButton onClick={() => stopOutput(kind)}>
               Stop
-            </button>
+            </GhostButton>
           </>
         ) : (
           <>
             {report ? (
               <Tooltip label={verifyDetail(report)}>
-                <span className={`verify ${report.problems > 0 ? "bad" : "good"}`}>
+                <span className={cn(
+                    "cursor-default rounded-full px-2 py-0.5 text-[11.5px] font-[550]",
+                    report.problems > 0
+                      ? "bg-[color-mix(in_srgb,var(--bad)_12%,transparent)] text-bad"
+                      : "bg-[color-mix(in_srgb,var(--good)_12%,transparent)] text-good",
+                  )}>
                   {report.problems > 0
                     ? `${report.problems} of ${report.citations.length} quotes unverified`
                     : `${report.citations.length} quotes verified`}
@@ -112,11 +117,11 @@ export function OutputView(props: Props) {
                 </span>
               </Tooltip>
             ) : null}
-            {output.fromCache ? <span className="muted">saved</span> : null}
+            {output.fromCache ? <span className="text-muted">saved</span> : null}
             {output.durationMs ? (
-              <span className="muted">{formatDuration(output.durationMs)}</span>
+              <span className="text-muted">{formatDuration(output.durationMs)}</span>
             ) : null}
-            <div className="spacer" />
+            <div className="flex-1" />
             <Menu
               ariaLabel="Copy this digest"
               side="bottom"
@@ -143,9 +148,9 @@ export function OutputView(props: Props) {
                 },
               ]}
             />
-            <button type="button" className="ghost-button" onClick={() => runOutput(kind, true)}>
+            <GhostButton onClick={() => runOutput(kind, true)}>
               Regenerate
-            </button>
+            </GhostButton>
           </>
         )}
       </div>
@@ -154,7 +159,7 @@ export function OutputView(props: Props) {
         <InlineError message={output.error} onRetry={() => runOutput(kind, true)} />
       ) : null}
 
-      <div className="output-body" data-selection-source={kind}>
+      <div className="pt-2 text-[14.5px] leading-[1.65] [&_.md_h2]:mt-[1.9em] [&_.md_h2]:mb-[0.7em] [&_.md_h2]:pb-0 [&_.md_h2]:text-base [&_.md_h2]:tracking-[-0.01em] [&_.md_h2:first-child]:mt-0 [&_.md_blockquote]:my-[0.9em] [&_.md_blockquote]:mb-[0.5em] [&_.md_blockquote]:border-l-2 [&_.md_blockquote]:border-accent [&_.md_blockquote]:py-0.5 [&_.md_blockquote]:pl-4 [&_.md_blockquote]:font-serif [&_.md_blockquote]:text-[15.5px] [&_.md_blockquote]:leading-[1.55] [&_.md_blockquote]:text-fg [&_.md_blockquote_p]:m-0 [&_.md_em]:text-muted" data-selection-source={kind}>
         {output.streaming && !output.text ? (
           <OutputSkeleton />
         ) : kind === "digest" ? (
@@ -164,7 +169,7 @@ export function OutputView(props: Props) {
               citations={report?.citations}
               streaming={output.streaming}
             />
-            {output.streaming ? <span className="caret" /> : null}
+            {output.streaming ? <span className="ml-0.5 inline-block h-[15px] w-[7px] bg-accent align-text-bottom animate-caret" /> : null}
           </>
         ) : (
           <>
@@ -173,7 +178,7 @@ export function OutputView(props: Props) {
               citations={report?.citations}
               onJump={(commentId) => jumpToComment(commentId)}
             />
-            {output.streaming ? <span className="caret" /> : null}
+            {output.streaming ? <span className="ml-0.5 inline-block h-[15px] w-[7px] bg-accent align-text-bottom animate-caret" /> : null}
           </>
         )}
       </div>

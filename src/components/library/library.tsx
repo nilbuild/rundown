@@ -1,5 +1,3 @@
-import "./library.css";
-
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Dialog } from "@base-ui-components/react/dialog";
 import { Search } from "lucide-react";
@@ -7,6 +5,8 @@ import { useApp } from "~/stores/app";
 import { librarySearch, libraryStats, readingHistory } from "~/lib/api";
 import { formatDate } from "~/utils/format";
 import type { HistoryEntry, LibraryHit, LibraryStats } from "~/types";
+import { GhostButton, PrimaryButton } from "~/components/ui/button";
+import { cn } from "~/utils/classname";
 
 const KIND_LABEL: Record<string, string> = {
   thread: "Comment",
@@ -131,9 +131,9 @@ export function Library() {
   return (
     <Dialog.Root open={open} onOpenChange={setOpen}>
       <Dialog.Portal>
-        <Dialog.Backdrop className="ui-backdrop" />
-        <Dialog.Popup className="ui-dialog library">
-          <div className="library-search">
+        <Dialog.Backdrop className="fixed inset-0 z-[260] bg-black/30 backdrop-blur-[2px] transition-opacity duration-[160ms] data-[ending-style]:opacity-0 data-[starting-style]:opacity-0" />
+        <Dialog.Popup className="fixed top-1/2 left-1/2 z-[270] flex max-h-[70vh] w-[620px] max-w-[92vw] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-xl border border-line bg-panel shadow-panel outline-none transition-[opacity,transform] duration-[160ms] data-[ending-style]:scale-97 data-[ending-style]:opacity-0 data-[starting-style]:scale-97 data-[starting-style]:opacity-0">
+          <div className="flex shrink-0 items-center gap-2.5 border-b border-line px-[18px] py-3.5 text-muted [&_input]:flex-1 [&_input]:border-none [&_input]:bg-transparent [&_input]:text-sm [&_input]:outline-none">
             <Search size={14} strokeWidth={2} />
             <input
               ref={inputRef}
@@ -145,29 +145,32 @@ export function Library() {
             />
           </div>
 
-          <div className="library-results">
+          <div className="overflow-y-auto p-1.5">
             {query.trim().length < 2 ? (
               <>
-                <p className="fine library-hint">
+                <p className="m-0 px-3.5 py-[18px] text-xs leading-[1.55] text-muted">
                   {stats
                     ? `${stats.entries} pieces across ${stats.stories} stories. Search, or tick two or more to read them together.`
                     : "Everything you have opened is here."}
                 </p>
 
                 {byDay.map(([key, entries]) => (
-                  <section key={key} className="library-day">
-                    <h3>
+                  <section key={key} className="pt-1 pb-2.5">
+                    <h3 className="mt-2.5 mb-1 flex items-baseline gap-2 px-3 text-[11px] font-[650] tracking-[0.05em] text-muted uppercase [&_.text-muted]:text-[11px] [&_.text-muted]:font-normal [&_.text-muted]:tracking-normal [&_.text-muted]:normal-case">
                       {dayLabel(key)}
-                      <span className="muted">
+                      <span className="text-muted">
                         {entries.length} {entries.length === 1 ? "story" : "stories"}
                       </span>
                     </h3>
                     {entries.map((entry) => (
                       <div
                         key={entry.storyId}
-                        className={`library-row ${picked.has(entry.storyId) ? "picked" : ""}`}
+                        className={cn(
+                          "flex items-center gap-2 rounded-[7px] py-0.5 pr-3 pl-2.5 hover:bg-line-soft",
+                          picked.has(entry.storyId) && "bg-accent-soft",
+                        )}
                       >
-                        <label className="check">
+                        <label className="flex shrink-0 items-center">
                           <input
                             type="checkbox"
                             checked={picked.has(entry.storyId)}
@@ -176,17 +179,17 @@ export function Library() {
                         </label>
                         <button
                           type="button"
-                          className="library-row-open"
+                          className="flex min-w-0 flex-1 items-baseline gap-2 py-1.5 text-left"
                           onClick={() => {
                             setOpen(false);
                             selectStory(entry.storyId);
                           }}
                         >
-                          <span className="library-row-title">
+                          <span className="min-w-0 flex-1 truncate text-[13px]">
                             {entry.title || `Story ${entry.storyId}`}
                           </span>
                           {entry.kinds.includes("rundown") ? (
-                            <span className="library-flag">briefed</span>
+                            <span className="shrink-0 rounded bg-line-soft px-1.5 text-[10px] leading-[15px] text-muted">briefed</span>
                           ) : null}
                         </button>
                       </div>
@@ -197,22 +200,22 @@ export function Library() {
             ) : null}
 
             {query.trim().length >= 2 && hits.length === 0 && !busy ? (
-              <p className="fine library-hint">Nothing matches “{query.trim()}”.</p>
+              <p className="m-0 px-3.5 py-[18px] text-xs leading-[1.55] text-muted">Nothing matches “{query.trim()}”.</p>
             ) : null}
 
             {hits.map((hit, index) => (
               <button
                 key={`${hit.storyId}-${hit.kind}-${index}`}
                 type="button"
-                className="library-hit"
+                className="block w-full rounded-lg px-3 py-2.5 text-left hover:bg-line-soft"
                 onClick={() => openHit(hit)}
               >
-                <div className="library-hit-head">
-                  <span className="library-kind">{KIND_LABEL[hit.kind] ?? hit.kind}</span>
-                  <span className="library-title">{hit.title}</span>
-                  <span className="muted">{formatDate(hit.createdAt)}</span>
+                <div className="mb-1 flex items-baseline gap-2 text-[11.5px]">
+                  <span className="shrink-0 rounded-[5px] bg-accent-soft px-[7px] py-px text-[10px] font-[650] tracking-[0.03em] text-accent uppercase">{KIND_LABEL[hit.kind] ?? hit.kind}</span>
+                  <span className="min-w-0 flex-1 truncate font-[550] text-fg">{hit.title}</span>
+                  <span className="text-muted">{formatDate(hit.createdAt)}</span>
                 </div>
-                <p className="library-snippet">
+                <p className="m-0 text-[12.5px] leading-[1.55] text-muted [&_mark]:bg-transparent [&_mark]:font-semibold [&_mark]:text-accent">
                   <Highlighted snippet={hit.snippet} />
                 </p>
               </button>
@@ -220,23 +223,22 @@ export function Library() {
           </div>
 
           {picked.size > 0 ? (
-            <div className="library-foot">
+            <div className="flex shrink-0 items-center gap-2.5 border-t border-line px-3.5 py-2.5 text-xs text-muted">
               <span>
                 {picked.size} {picked.size === 1 ? "story" : "stories"} picked
               </span>
-              <button type="button" className="ghost-button" onClick={() => clearPicked()}>
+              <GhostButton onClick={() => clearPicked()}>
                 Clear
-              </button>
-              <div className="spacer" />
-              <button
-                type="button"
-                className="primary-button small"
+              </GhostButton>
+              <div className="flex-1" />
+              <PrimaryButton
+                small
                 disabled={picked.size < 2}
                 title={picked.size < 2 ? "Pick at least two" : "Read these together"}
                 onClick={() => runSynthesis("")}
               >
                 Read together
-              </button>
+              </PrimaryButton>
             </div>
           ) : null}
         </Dialog.Popup>

@@ -1,5 +1,3 @@
-import "./sidebar.css";
-
 import { useEffect, useRef, useState } from "react";
 import { useApp } from "~/stores/app";
 import { compact, timeAgo } from "~/utils/format";
@@ -9,6 +7,7 @@ import { InlineError } from "~/components/ui/error-state";
 import { parseItemRef } from "~/utils/hn-link";
 import type { FeedName } from "~/types";
 import { RotateCw, X } from "lucide-react";
+import { cn } from "~/utils/classname";
 
 const FEEDS: { key: FeedName; label: string }[] = [
   { key: "top", label: "Top" },
@@ -100,13 +99,13 @@ export function Sidebar() {
   }, [stories, selectedId, selectStory]);
 
   return (
-    <aside className="sidebar">
+    <aside className="flex min-h-0 flex-col border-r border-line bg-panel-2">
       {/* Nothing but clearance for the traffic lights, and somewhere to grab
           the window. The app's name is already in the menu bar. */}
-      <div className="sidebar-top" data-tauri-drag-region />
+      <div className="h-9" data-tauri-drag-region />
 
       <form
-        className="search"
+        className="relative px-3 pt-0.5 pb-2.5"
         onSubmit={(event) => {
           event.preventDefault();
           // A pasted thread link is an instruction to open it, not a search for
@@ -121,6 +120,7 @@ export function Sidebar() {
         }}
       >
         <input
+          className="w-full rounded-[7px] border border-line bg-panel py-1.5 pr-[30px] pl-2.5 text-[12.5px] outline-none focus:border-accent"
           type="search"
           value={draft}
           placeholder="Search, or paste a thread link"
@@ -140,7 +140,7 @@ export function Sidebar() {
         {draft ? (
           <button
             type="button"
-            className="search-clear"
+            className="absolute top-1.5 right-[18px] inline-flex size-[18px] items-center justify-center rounded-full text-muted transition-[background,color] duration-[120ms] hover:bg-line hover:text-fg"
             aria-label="Clear search"
             onClick={() => {
               setDraft("");
@@ -152,12 +152,15 @@ export function Sidebar() {
         ) : null}
       </form>
 
-      <nav className="feeds">
+      <nav className="flex items-center gap-0.5 border-b border-line px-3 pb-2">
         {FEEDS.map((entry) => (
           <button
             key={entry.key}
             type="button"
-            className={!searching && feed === entry.key ? "active" : ""}
+            className={cn(
+              "rounded-md px-2 py-[3px] text-xs text-muted hover:bg-line-soft hover:text-fg",
+              !searching && feed === entry.key && "bg-accent-soft font-[550] text-accent",
+            )}
             onClick={() => setFeed(entry.key)}
           >
             {entry.label}
@@ -166,17 +169,17 @@ export function Sidebar() {
         <Tooltip label={refreshing ? "Refreshing…" : "Refresh this feed"}>
           <button
             type="button"
-            className="feed-refresh"
+            className="ml-auto inline-flex h-6 w-[26px] items-center justify-center rounded-md text-muted not-disabled:hover:bg-line-soft not-disabled:hover:text-fg disabled:cursor-default disabled:text-accent"
             aria-label="Refresh"
             disabled={refreshing}
             onClick={() => (searching ? runSearch(searchQuery) : refreshFeed(true))}
           >
-<RotateCw size={13} strokeWidth={2} className={refreshing ? "spinning" : ""} />
+<RotateCw size={13} strokeWidth={2} className={cn(refreshing && "animate-spin-slow motion-reduce:animate-none motion-reduce:opacity-50")} />
           </button>
         </Tooltip>
       </nav>
 
-      <div className="story-list" ref={listRef}>
+      <div className="flex-1 overflow-y-auto pt-1.5 pb-6" ref={listRef}>
         {loading && stories.length === 0 ? <StoryListSkeleton /> : null}
         {error ? (
           <InlineError
@@ -186,7 +189,7 @@ export function Sidebar() {
           />
         ) : null}
         {!loading && !error && stories.length === 0 ? (
-          <div className="hint pad">
+          <div className="px-8 py-7 text-[13px] text-muted">
             {searching ? `Nothing matched “${searchQuery}”.` : "Nothing here."}
           </div>
         ) : null}
@@ -196,16 +199,24 @@ export function Sidebar() {
             key={story.id}
             type="button"
             data-story-id={story.id}
-            className={`story ${story.id === selectedId ? "selected" : ""} ${
-              readIds.has(story.id) ? "read" : ""
-            }`}
+            className={cn(
+              "flex w-full gap-2.5 border-l-2 border-transparent py-[9px] pr-3.5 pl-2.5 text-left hover:bg-line-soft",
+              story.id === selectedId && "border-l-accent bg-accent-soft",
+            )}
             onClick={() => selectStory(story.id)}
           >
-            <div className="story-rank">{searching ? "" : index + 1}</div>
-            <div className="story-body">
-              <div className="story-title">{story.title}</div>
-              <div className="story-meta">
-                {story.domain ? <span className="domain">{story.domain}</span> : null}
+            <div className="w-[18px] pt-px text-right text-[11px] text-muted tabular-nums">{searching ? "" : index + 1}</div>
+            <div className="min-w-0 flex-1">
+              <div
+                className={cn(
+                  "mb-[3px] text-[13px] leading-[1.4] font-medium",
+                  readIds.has(story.id) && story.id !== selectedId && "text-muted",
+                )}
+              >
+                {story.title}
+              </div>
+              <div className="flex flex-wrap gap-2 text-[11px] text-muted tabular-nums">
+                {story.domain ? <span className="max-w-[150px] truncate text-accent opacity-85">{story.domain}</span> : null}
                 <span>{compact(story.score)} pts</span>
                 <span>{compact(story.descendants)} comments</span>
                 <span>{timeAgo(story.time)}</span>
@@ -215,7 +226,7 @@ export function Sidebar() {
         ))}
 
         {stories.length > 0 && !searching ? (
-          <div className="sentinel" ref={sentinelRef}>
+          <div className="pt-[18px] pb-1.5 text-center text-[11.5px] text-muted" ref={sentinelRef}>
             {loadingMore ? "Loading more…" : hasMore ? "" : "End of feed"}
           </div>
         ) : null}

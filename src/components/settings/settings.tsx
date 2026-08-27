@@ -1,12 +1,11 @@
-import "./settings.css";
-
 import { useEffect, useState } from "react";
-import { Dialog } from "@base-ui-components/react/dialog";
+import { Dialog } from "~/components/ui/dialog";
+import { cn } from "~/utils/classname";
 import { useApp } from "~/stores/app";
 import { dataLocation, openExternal } from "~/lib/api";
 import { Select } from "~/components/ui/select";
 import type { ModelSlot, PrefetchMode, Provider } from "~/types";
-import { X } from "lucide-react";
+import { GhostButton, LinkButton } from "~/components/ui/button";
 
 const SLOTS: { slot: ModelSlot; label: string; hint: string }[] = [
   { slot: "rundown", label: "Briefing", hint: "The thread summary — worth the deepest model" },
@@ -50,32 +49,30 @@ export function Settings() {
   const installed = provider === "claude" ? status?.claude : status?.codex;
 
   return (
-    <Dialog.Root open={open} onOpenChange={setOpen}>
-      <Dialog.Portal>
-        <Dialog.Backdrop className="ui-backdrop" />
-        <Dialog.Popup className="ui-dialog settings">
-        <header>
-          <Dialog.Title className="ui-dialog-title">Settings</Dialog.Title>
-          <Dialog.Close className="icon-button" aria-label="Close">
-<X size={13} strokeWidth={2.2} />
-          </Dialog.Close>
-        </header>
-
-        <section>
-          <h3>Provider</h3>
-          <p className="fine">
+    <Dialog
+      open={open}
+      onOpenChange={setOpen}
+      title="Settings"
+      className="w-[600px]"
+    >
+        <section className="mt-[30px] first:mt-0">
+          <h3 className="mb-2 text-xs font-semibold tracking-[0.05em] text-muted uppercase">Provider</h3>
+          <p className="m-0 mb-3.5 max-w-[46ch] text-xs leading-[1.5] text-muted">
             Runs go through the CLI already installed on this Mac, so they use the subscription you
             are already signed in to. Nothing is sent anywhere else, and no API key is stored.
           </p>
 
-          <div className="row">
-            <label>Use</label>
-            <div className="segmented">
+          <div className="mt-2.5 grid min-h-7 grid-cols-[96px_minmax(0,1fr)] items-center gap-x-4 gap-y-2 text-[13px]">
+            <label className="text-muted">Use</label>
+            <div className="flex justify-self-start gap-0.5 rounded-lg bg-line-soft p-0.5">
               {(["claude", "codex"] as Provider[]).map((entry) => (
                 <button
                   key={entry}
                   type="button"
-                  className={provider === entry ? "active" : ""}
+                  className={cn(
+                    "rounded-md px-3.5 py-1 text-[12.5px] text-muted",
+                    provider === entry && "bg-panel font-[550] text-fg shadow-[0_1px_2px_rgba(0,0,0,0.08)]",
+                  )}
                   onClick={() => setProvider(entry)}
                 >
                   {entry === "claude" ? "Claude" : "Codex"}
@@ -84,17 +81,17 @@ export function Settings() {
             </div>
           </div>
 
-          <div className="row">
-            <label>Status</label>
-            <span className={installed ? "muted" : "error"}>
+          <div className="mt-2.5 grid min-h-7 grid-cols-[96px_minmax(0,1fr)] items-center gap-x-4 gap-y-2 text-[13px]">
+            <label className="text-muted">Status</label>
+            <span className={installed ? "text-muted" : "text-bad"}>
               {installed ? installed : `\`${provider}\` was not found on your PATH`}
             </span>
           </div>
 
           {rateLimit ? (
-            <div className="row">
-              <label>Usage</label>
-              <span className="muted">
+            <div className="mt-2.5 grid min-h-7 grid-cols-[96px_minmax(0,1fr)] items-center gap-x-4 gap-y-2 text-[13px]">
+              <label className="text-muted">Usage</label>
+              <span className="text-muted">
                 {rateLimit.status}
                 {rateLimit.window ? ` · ${rateLimit.window.replace("_", " ")} window` : ""}
                 {rateLimit.resetsAt
@@ -108,29 +105,27 @@ export function Settings() {
           ) : null}
         </section>
 
-        <section>
-          <h3>Models</h3>
-          <p className="fine">
+        <section className="mt-[30px] first:mt-0">
+          <h3 className="mb-2 text-xs font-semibold tracking-[0.05em] text-muted uppercase">Models</h3>
+          <p className="m-0 mb-3.5 max-w-[46ch] text-xs leading-[1.5] text-muted">
             Set per job rather than globally, so the digest can think hard while the chat stays
             quick.
           </p>
           {Object.keys(modelOverrides).length > 0 ? (
-            <div className="row">
+            <div className="mt-2.5 grid min-h-7 grid-cols-[96px_minmax(0,1fr)] items-center gap-x-4 gap-y-2 text-[13px]">
               <label />
-              <button
-                type="button"
-                className="ghost-button"
-                style={{ justifySelf: "start" }}
+              <GhostButton
+                className="justify-self-start"
                 onClick={() => resetModels()}
               >
                 Use the defaults
-              </button>
+              </GhostButton>
             </div>
           ) : null}
 
           {SLOTS.map((entry) => (
-            <div className="row" key={entry.slot}>
-              <label title={entry.hint}>{entry.label}</label>
+            <div className="mt-2.5 grid min-h-7 grid-cols-[96px_minmax(0,1fr)] items-center gap-x-4 gap-y-2 text-[13px]" key={entry.slot}>
+              <label className="text-muted" title={entry.hint}>{entry.label}</label>
               <Select
                 ariaLabel={`Model for ${entry.label}`}
                 value={models[entry.slot] ?? ""}
@@ -143,42 +138,43 @@ export function Settings() {
           ))}
         </section>
 
-        <section>
-          <h3>Presets</h3>
-          <p className="fine">
+        <section className="mt-[30px] first:mt-0">
+          <h3 className="mb-2 text-xs font-semibold tracking-[0.05em] text-muted uppercase">Presets</h3>
+          <p className="m-0 mb-3.5 max-w-[46ch] text-xs leading-[1.5] text-muted">
             Saved questions you can fire at any thread from the chat composer.
           </p>
-          <div className="row">
-            <label>Manage</label>
-            <button
-              type="button"
-              className="ghost-button"
-              style={{ justifySelf: "start" }}
+          <div className="mt-2.5 grid min-h-7 grid-cols-[96px_minmax(0,1fr)] items-center gap-x-4 gap-y-2 text-[13px]">
+            <label className="text-muted">Manage</label>
+            <GhostButton
+              className="justify-self-start"
               onClick={() => {
                 setOpen(false);
                 setPresetsOpen(true);
               }}
             >
               Open presets… ⌘P
-            </button>
+            </GhostButton>
           </div>
         </section>
 
-        <section>
-          <h3>Prefetch</h3>
-          <p className="fine">
+        <section className="mt-[30px] first:mt-0">
+          <h3 className="mb-2 text-xs font-semibold tracking-[0.05em] text-muted uppercase">Prefetch</h3>
+          <p className="m-0 mb-3.5 max-w-[46ch] text-xs leading-[1.5] text-muted">
             Starts a couple of seconds after you open a thread, so it is ready or already streaming
             by the time you switch tabs. Skipped for threads you pass straight through, threads that
             already have one, and threads with almost no comments.
           </p>
-          <div className="row">
-            <label>Generate early</label>
-            <div className="segmented">
+          <div className="mt-2.5 grid min-h-7 grid-cols-[96px_minmax(0,1fr)] items-center gap-x-4 gap-y-2 text-[13px]">
+            <label className="text-muted">Generate early</label>
+            <div className="flex justify-self-start gap-0.5 rounded-lg bg-line-soft p-0.5">
               {PREFETCH.map((entry) => (
                 <button
                   key={entry.mode}
                   type="button"
-                  className={prefetch === entry.mode ? "active" : ""}
+                  className={cn(
+                    "rounded-md px-3.5 py-1 text-[12.5px] text-muted",
+                    prefetch === entry.mode && "bg-panel font-[550] text-fg shadow-[0_1px_2px_rgba(0,0,0,0.08)]",
+                  )}
                   onClick={() => setPrefetch(entry.mode)}
                 >
                   {entry.label}
@@ -188,29 +184,25 @@ export function Settings() {
           </div>
         </section>
 
-        <section>
-          <h3>Data</h3>
-          <p className="fine">
+        <section className="mt-[30px] first:mt-0">
+          <h3 className="mb-2 text-xs font-semibold tracking-[0.05em] text-muted uppercase">Data</h3>
+          <p className="m-0 mb-3.5 max-w-[46ch] text-xs leading-[1.5] text-muted">
             Threads, articles, generated output, and chats live in a single SQLite file. Nothing
             leaves this machine except the text sent to the model you chose.
           </p>
-          <div className="row">
-            <label>Location</label>
-            <code className="path">{location}</code>
+          <div className="mt-2.5 grid min-h-7 grid-cols-[96px_minmax(0,1fr)] items-center gap-x-4 gap-y-2 text-[13px]">
+            <label className="text-muted">Location</label>
+            <code className="overflow-x-auto font-mono text-[11px] whitespace-nowrap text-muted">{location}</code>
           </div>
         </section>
 
-        <footer>
-          <button
-            type="button"
-            className="link"
+        <footer className="mt-[30px] text-xs">
+          <LinkButton
             onClick={() => openExternal("https://news.ycombinator.com")}
           >
             Hacker News ↗
-          </button>
+          </LinkButton>
         </footer>
-        </Dialog.Popup>
-      </Dialog.Portal>
-    </Dialog.Root>
+    </Dialog>
   );
 }

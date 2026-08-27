@@ -116,7 +116,7 @@ export function SelectionPopover() {
   return (
     <div
       ref={popoverRef}
-      className="selection-popover"
+      className="fixed z-90 flex -translate-x-1/2 -translate-y-full items-center gap-0.5 rounded-[9px] border border-line bg-panel p-1 shadow-panel [&_button]:rounded-md [&_button]:px-2.5 [&_button]:py-[5px] [&_button]:text-xs [&_button]:whitespace-nowrap [&_button:hover]:bg-accent-soft [&_button:hover]:text-accent"
       style={{ top: anchor.top, left: anchor.left }}
     >
       <button type="button" onClick={() => ask("What does this mean, and why does it matter here?")}>

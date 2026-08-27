@@ -1,6 +1,4 @@
 import { InlineError } from "~/components/ui/error-state";
-import "./chat-pane.css";
-
 import { useEffect, useRef, useState } from "react";
 import { useApp } from "~/stores/app";
 import { Markdown } from "~/components/markdown/markdown";
@@ -9,6 +7,8 @@ import { Menu } from "~/components/ui/menu";
 import type { MenuEntry } from "~/components/ui/menu";
 import { Tooltip } from "~/components/ui/tooltip";
 import { ListFilter, X } from "lucide-react";
+import { GhostButton, IconButton, PrimaryButton } from "~/components/ui/button";
+import { cn } from "~/utils/classname";
 
 export function ChatPane() {
   const thread = useApp((state) => state.thread);
@@ -63,7 +63,11 @@ export function ChatPane() {
 
   if (!chatOpen) {
     return (
-      <button type="button" className="chat-reopen" onClick={() => setChatOpen(true)}>
+      <button
+        type="button"
+        className="fixed right-4 bottom-4 z-10 rounded-[20px] bg-accent px-4 py-2 text-[12.5px] font-[550] text-white shadow-panel"
+        onClick={() => setChatOpen(true)}
+      >
         Chat
       </button>
     );
@@ -122,12 +126,18 @@ export function ChatPane() {
   };
 
   return (
-    <section className="chat">
-      <header className="chat-head" data-tauri-drag-region>
-        <span className="label" data-tauri-drag-region>
+    <section className="flex min-h-0 flex-col border-l border-line bg-panel-2">
+      <header
+        className="flex h-13 items-center gap-2 border-b border-line-soft pr-2.5 pl-3.5"
+        data-tauri-drag-region
+      >
+        <span
+          className="text-[11px] font-semibold tracking-[0.06em] text-muted uppercase"
+          data-tauri-drag-region
+        >
           Chat
         </span>
-        <div className="spacer" data-tauri-drag-region />
+        <div className="flex-1" data-tauri-drag-region />
         <Menu
           ariaLabel="Saved questions"
           entries={presetEntries}
@@ -140,34 +150,35 @@ export function ChatPane() {
           }
         />
         {messages.length > 0 ? (
-          <button type="button" className="ghost-button" onClick={() => resetChat()}>
+          <GhostButton onClick={() => resetChat()}>
             Clear
-          </button>
+          </GhostButton>
         ) : null}
         <Tooltip label="Hide the chat pane (⌘\\)">
-          <button
-            type="button"
-            className="icon-button"
+          <IconButton
+           
+           
             aria-label="Hide the chat pane"
             onClick={() => setChatOpen(false)}
           >
 <X size={12} strokeWidth={2.2} />
-          </button>
+          </IconButton>
         </Tooltip>
       </header>
 
-      <div className="chat-scroll" ref={scrollRef} onScroll={onScroll}>
-        {!thread ? <div className="hint pad">Open a story to start asking about it.</div> : null}
+      <div className="flex-1 overflow-y-auto px-3.5 pt-3.5 pb-2" ref={scrollRef} onScroll={onScroll}>
+        {!thread ? <div className="px-8 py-7 text-[13px] text-muted">Open a story to start asking about it.</div> : null}
 
         {thread && messages.length === 0 && !busy ? (
-          <div className="starters">
-            <p className="hint">
+          <div className="flex flex-wrap gap-1.5">
+            <p className="m-0 mb-0.5 w-full text-[13px] text-muted">
               The whole thread and the article are already loaded. Ask anything, or start with:
             </p>
             {presets.map((preset) => (
               <button
                 key={preset.id}
                 type="button"
+                className="rounded-lg border border-line bg-panel px-[11px] py-1.5 text-left text-[12.5px] leading-[1.45] font-[550] text-fg-soft transition-[border-color] duration-[120ms] hover:border-accent hover:text-fg"
                 title={preset.prompt}
                 onClick={() => runPreset(preset.id)}
               >
@@ -178,11 +189,19 @@ export function ChatPane() {
         ) : null}
 
         {messages.map((message) => (
-          <div key={message.id} className={`bubble ${message.role}`}>
+          <div
+            key={message.id}
+            className={cn(
+              "group/bubble mb-3.5 text-[13px] leading-[1.6]",
+              message.role === "user"
+                ? "rounded-[10px] bg-accent-soft px-3 py-[9px] text-fg [&_blockquote]:mb-1.5 [&_blockquote]:border-l-2 [&_blockquote]:border-accent [&_blockquote]:pl-2.5 [&_blockquote]:text-xs [&_blockquote]:text-muted"
+                : "text-fg-soft",
+            )}
+          >
             {message.role === "assistant" ? (
               <>
                 <Markdown source={message.content} onJump={(id) => jumpToComment(id)} />
-                <div className="bubble-actions">
+                <div className="mt-1.5 flex gap-1 opacity-0 transition-opacity duration-[120ms] group-hover/bubble:opacity-100 [&_button]:rounded-md [&_button]:border [&_button]:border-line [&_button]:bg-line-soft [&_button]:px-2 [&_button]:py-0.5 [&_button]:text-[11px] [&_button]:text-muted [&_button:hover]:bg-line [&_button:hover]:text-fg">
                   <button
                     type="button"
                     onClick={() => navigator.clipboard.writeText(message.content)}
@@ -198,13 +217,13 @@ export function ChatPane() {
         ))}
 
         {busy ? (
-          <div className="bubble assistant">
+          <div className="group/bubble mb-3.5 text-[13px] leading-[1.6] text-fg-soft">
             {streaming ? (
               <Markdown source={streaming} onJump={(id) => jumpToComment(id)} />
             ) : (
-              <span className="muted">Thinking…</span>
+              <span className="text-muted">Thinking…</span>
             )}
-            <span className="caret" />
+            <span className="ml-0.5 inline-block h-[15px] w-[7px] bg-accent align-text-bottom animate-caret" />
           </div>
         ) : null}
 
@@ -212,27 +231,28 @@ export function ChatPane() {
       </div>
 
       {!pinned && (busy || messages.length > 0) ? (
-        <button type="button" className="jump-latest" onClick={jumpToLatest}>
+        <button type="button" className="mb-2 self-center rounded-[20px] bg-accent px-3 py-[5px] text-[11.5px] font-[550] text-white shadow-panel" onClick={jumpToLatest}>
           Jump to latest ↓
         </button>
       ) : null}
 
       {selection ? (
-        <div className="selection-chip">
-          <span className="selection-text">{selection.text}</span>
-          <button
-            type="button"
-            className="icon-button"
+        <div className="mx-3.5 mb-2 flex items-start gap-2 rounded-[10px] border border-[color-mix(in_srgb,var(--accent)_24%,transparent)] bg-[color-mix(in_srgb,var(--accent)_9%,var(--panel))] py-[9px] pr-[9px] pl-3 text-xs">
+          <span className="line-clamp-3 flex-1 text-fg-soft">{selection.text}</span>
+          <IconButton
+           
+           
             aria-label="Drop the highlighted passage"
             onClick={() => setSelection(null)}
           >
 <X size={12} strokeWidth={2.2} />
-          </button>
+          </IconButton>
         </div>
       ) : null}
 
-      <div className="chat-input">
+      <div className="flex flex-col gap-2 border-t border-line-soft px-3.5 pt-3 pb-3.5">
         <textarea
+          className="w-full resize-none rounded-[9px] border border-line bg-panel px-[11px] py-[9px] text-[13px] leading-[1.5] outline-none transition-[border-color] duration-[120ms] placeholder:text-muted focus:border-accent disabled:opacity-55"
           ref={inputRef}
           value={draft}
           rows={2}
@@ -247,7 +267,7 @@ export function ChatPane() {
           }}
         />
         {naming ? (
-          <div className="preset-name">
+          <div className="mb-0.5 flex items-center gap-1.5">
             <input
               value={presetName}
               placeholder="Name this preset"
@@ -269,9 +289,9 @@ export function ChatPane() {
                 }
               }}
             />
-            <button
-              type="button"
-              className="ghost-button"
+            <GhostButton
+             
+             
               onClick={() => {
                 addPreset(presetName, draft);
                 setNaming(false);
@@ -279,21 +299,21 @@ export function ChatPane() {
               }}
             >
               Save
-            </button>
-            <button
-              type="button"
-              className="ghost-button"
+            </GhostButton>
+            <GhostButton
+             
+             
               onClick={() => {
                 setNaming(false);
                 setPresetName("");
               }}
             >
               Cancel
-            </button>
+            </GhostButton>
           </div>
         ) : null}
 
-        <div className="chat-input-foot">
+        <div className="flex items-center gap-2">
           <Select
             size="sm"
             ariaLabel="Model used for chat"
@@ -302,21 +322,20 @@ export function ChatPane() {
             resolved={resolved}
             onChange={(next) => setModelFor("chat", next || null)}
           />
-          <span className="fine">{busy ? "Streaming…" : "⏎ to send"}</span>
-          <div className="spacer" />
+          <span className="text-[11px] whitespace-nowrap text-muted">{busy ? "Streaming…" : "⏎ to send"}</span>
+          <div className="flex-1" />
           {busy ? (
-            <button type="button" className="ghost-button" onClick={() => stopChat()}>
+            <GhostButton onClick={() => stopChat()}>
               Stop
-            </button>
+            </GhostButton>
           ) : (
-            <button
-              type="button"
-              className="primary-button small"
+            <PrimaryButton
+             
+             
               disabled={!thread || !draft.trim()}
-              onClick={submit}
-            >
+              onClick={submit} small>
               Send
-            </button>
+            </PrimaryButton>
           )}
         </div>
       </div>

@@ -1,9 +1,9 @@
-import "./presets-dialog.css";
-
 import { useState } from "react";
-import { Dialog } from "@base-ui-components/react/dialog";
+import { Dialog } from "~/components/ui/dialog";
 import { useApp } from "~/stores/app";
-import { Trash2, X } from "lucide-react";
+import { Trash2 } from "lucide-react";
+import { GhostButton, IconButton, PrimaryButton } from "~/components/ui/button";
+import { cn } from "~/utils/classname";
 
 export function PresetsDialog() {
   const open = useApp((state) => state.presetsOpen);
@@ -45,29 +45,29 @@ export function PresetsDialog() {
   };
 
   return (
-    <Dialog.Root open={open} onOpenChange={setOpen}>
-      <Dialog.Portal>
-        <Dialog.Backdrop className="ui-backdrop" />
-        <Dialog.Popup className="ui-dialog presets-dialog">
-          <header>
-            <div>
-              <Dialog.Title className="ui-dialog-title">Presets</Dialog.Title>
-              <Dialog.Description className="ui-dialog-sub">
-                Questions you can fire at any thread. These are also the suggestions on an empty
-                chat.
-              </Dialog.Description>
-            </div>
-            <Dialog.Close className="icon-button" aria-label="Close">
-<X size={13} strokeWidth={2.2} />
-            </Dialog.Close>
-          </header>
+    <Dialog
+      open={open}
+      onOpenChange={setOpen}
+      title="Presets"
+      subtitle="Questions you can fire at any thread. These are also the suggestions on an empty chat."
+      className="flex flex-col overflow-hidden [&>header]:flex-none"
+    >
 
-          <ul className="preset-list">
+          <ul className="-mr-2.5 mb-3.5 flex min-h-0 flex-1 list-none flex-col gap-0.5 overflow-y-auto p-0 pr-2.5">
             {presets.map((preset) => (
-              <li key={preset.id} className={editing === preset.id ? "editing" : ""}>
+              <li
+                key={preset.id}
+                className={cn(
+                  "group/row flex items-center gap-2.5 rounded-[9px] py-[7px] pr-2 pl-[11px]",
+                  editing === preset.id
+                    ? "items-stretch border border-line bg-panel-2 p-3"
+                    : "hover:bg-line-soft",
+                )}
+              >
                 {editing === preset.id ? (
-                  <div className="preset-edit">
+                  <div className="flex w-full flex-col gap-2">
                     <input
+                      className="w-full resize-y rounded-lg border border-line bg-panel px-[11px] py-2 text-[12.5px] leading-[1.5] outline-none transition-[border-color] duration-[120ms] focus:border-accent"
                       type="text"
                       autoComplete="off"
                       value={label}
@@ -77,6 +77,7 @@ export function PresetsDialog() {
                       onChange={(event) => setLabel(event.target.value)}
                     />
                     <textarea
+                      className="w-full resize-y rounded-lg border border-line bg-panel px-[11px] py-2 text-[12.5px] leading-[1.5] outline-none transition-[border-color] duration-[120ms] focus:border-accent"
                       value={prompt}
                       rows={2}
                       placeholder="The question to ask"
@@ -91,17 +92,17 @@ export function PresetsDialog() {
                         }
                       }}
                     />
-                    <div className="preset-edit-foot">
-                      <button type="button" className="primary-button small" onClick={commitEdit}>
+                    <div className="flex items-center gap-2.5">
+                      <PrimaryButton onClick={commitEdit} small>
                         Save
-                      </button>
-                      <button
-                        type="button"
-                        className="ghost-button"
+                      </PrimaryButton>
+                      <GhostButton
+                       
+                       
                         onClick={() => setEditing(null)}
                       >
                         Cancel
-                      </button>
+                      </GhostButton>
                     </div>
                   </div>
                 ) : (
@@ -112,50 +113,51 @@ export function PresetsDialog() {
                         made every row three lines tall, which is what pushed
                         "Add one" below the fold once you had a handful. The
                         full prompt stays one hover away as the title. */}
-                    <div className="preset-body" title={preset.prompt}>
-                      <span className="preset-label">{preset.label}</span>
+                    <div className="min-w-0 flex-1 truncate" title={preset.prompt}>
+                      <span className="text-[12.5px] font-[550]">{preset.label}</span>
                     </div>
-                    <div className="preset-actions">
+                    <div className="flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity duration-[120ms] group-hover/row:opacity-100 group-focus-within/row:opacity-100">
                       {thread ? (
-                        <button
-                          type="button"
-                          className="ghost-button"
+                        <GhostButton
+                         
+                         
                           onClick={() => {
                             runPreset(preset.id);
                             setOpen(false);
                           }}
                         >
                           Run
-                        </button>
+                        </GhostButton>
                       ) : null}
-                      <button
-                        type="button"
-                        className="ghost-button"
+                      <GhostButton
+                       
+                       
                         onClick={() => startEdit(preset.id, preset.label, preset.prompt)}
                       >
                         Edit
-                      </button>
-                      <button
-                        type="button"
-                        className="icon-button"
+                      </GhostButton>
+                      <IconButton
+                       
+                       
                         aria-label={`Delete ${preset.label}`}
                         onClick={() => removePreset(preset.id)}
                       >
 <Trash2 size={12} strokeWidth={2} />
-                      </button>
+                      </IconButton>
                     </div>
                   </>
                 )}
               </li>
             ))}
             {presets.length === 0 ? (
-              <li className="preset-empty">Nothing saved yet.</li>
+              <li className="text-xs text-muted">Nothing saved yet.</li>
             ) : null}
           </ul>
 
-          <div className="preset-new">
-            <span className="label">Add one</span>
+          <div className="mt-5 flex w-full flex-none flex-col gap-2 border-t border-line-soft pt-[18px]">
+            <span className="text-[11px] font-semibold tracking-[0.06em] text-muted uppercase">Add one</span>
             <input
+              className="w-full resize-y rounded-lg border border-line bg-panel px-[11px] py-2 text-[12.5px] leading-[1.5] outline-none transition-[border-color] duration-[120ms] focus:border-accent"
               type="text"
               autoComplete="off"
               value={newLabel}
@@ -164,6 +166,7 @@ export function PresetsDialog() {
               onChange={(event) => setNewLabel(event.target.value)}
             />
             <textarea
+              className="w-full resize-y rounded-lg border border-line bg-panel px-[11px] py-2 text-[12.5px] leading-[1.5] outline-none transition-[border-color] duration-[120ms] focus:border-accent"
               value={newPrompt}
               rows={2}
               placeholder="The question to ask"
@@ -175,20 +178,17 @@ export function PresetsDialog() {
                 }
               }}
             />
-            <div className="preset-edit-foot">
-              <button
-                type="button"
-                className="primary-button small"
+            <div className="flex items-center gap-2.5">
+              <PrimaryButton
+               
+               
                 disabled={!newLabel.trim() || !newPrompt.trim()}
-                onClick={commitNew}
-              >
+                onClick={commitNew} small>
                 Add preset
-              </button>
-              <span className="fine">⌘⏎ to add</span>
+              </PrimaryButton>
+              <span className="text-xs leading-[1.5] text-muted">⌘⏎ to add</span>
             </div>
           </div>
-        </Dialog.Popup>
-      </Dialog.Portal>
-    </Dialog.Root>
+    </Dialog>
   );
 }

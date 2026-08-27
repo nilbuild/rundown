@@ -1,5 +1,3 @@
-import "./rundown-view.css";
-
 import { useMemo } from "react";
 import { useApp } from "~/stores/app";
 import { Markdown } from "~/components/markdown/markdown";
@@ -12,6 +10,8 @@ import type { ReadLevel } from "~/types";
 import { Menu } from "~/components/ui/menu";
 import { ChevronDown } from "lucide-react";
 import { toPlainMarkdown, toPortableMarkdown } from "~/utils/export";
+import { GhostButton, LinkButton, PrimaryButton } from "~/components/ui/button";
+import { cn } from "~/utils/classname";
 
 function countSources(markdown: string) {
   const seen = new Set<number>();
@@ -66,20 +66,20 @@ export function RundownView() {
   // though nothing is going to happen.
   if (!output.text && !output.streaming && !output.error && prefetchPending) {
     return (
-      <div className="output rundown">
-        <div className="output-toolbar">
-          <span className="pulse" />
-          <span className="muted">Starting the briefing…</span>
-          <div className="spacer" />
-          <button
-            type="button"
-            className="ghost-button"
+      <div className="mx-auto max-w-[720px] px-8 pb-[120px]">
+        <div className="sticky top-0 z-2 flex items-center gap-2.5 bg-panel pt-3 pb-3.5 text-xs">
+          <span className="size-[7px] shrink-0 rounded-full bg-accent animate-pulse-dot" />
+          <span className="text-muted">Starting the briefing…</span>
+          <div className="flex-1" />
+          <GhostButton
+           
+           
             onClick={() => runOutput("rundown", true)}
           >
             Start now
-          </button>
+          </GhostButton>
         </div>
-        <article className="rundown-body">
+        <article className="max-w-[640px] pt-1.5 [&_.md]:text-[15px] [&_.md]:leading-[1.68] [&_.md]:text-fg-soft [&_.md>p:first-child]:mb-[1.4em] [&_.md>p:first-child]:text-[17px] [&_.md>p:first-child]:leading-[1.55] [&_.md>p:first-child]:text-fg [&_.md_h2]:mt-[2em] [&_.md_h2]:mb-[0.65em] [&_.md_h2]:text-[15.5px] [&_.md_h2]:font-[620] [&_.md_h2]:tracking-[-0.008em] [&_.md_h2]:text-fg [&_.md_h2:first-child]:mt-0 [&_.md_li]:mb-[0.45em]">
           <OutputSkeleton />
         </article>
       </div>
@@ -88,18 +88,18 @@ export function RundownView() {
 
   if (!output.text && !output.streaming && !output.error) {
     return (
-      <div className="empty-state">
+      <div className="mx-auto max-w-[440px] px-8 py-[90px] text-center [&_h2]:mb-2 [&_h2]:font-serif [&_h2]:text-[22px] [&_h2]:font-semibold [&_h2]:tracking-[-0.015em] [&_p]:mb-5 [&_p]:text-[13.5px] [&_p]:leading-[1.6] [&_p]:text-muted">
         <h2>What's the story here?</h2>
         <p>
           One account of the subject, merging the article with what the thread knows, in plain
           words. Each claim carries a small marker — hover it to read the comment behind the
           claim, so you only open the thread when you want to.
         </p>
-        <button type="button" className="primary-button" onClick={() => runOutput("rundown")}>
+        <PrimaryButton onClick={() => runOutput("rundown")}>
           Write it up
-        </button>
+        </PrimaryButton>
         {partial ? (
-          <p className="fine">
+          <p className="text-xs leading-[1.5] text-muted">
             This thread is large. {coverage!.included} of {coverage!.total} comments will be sent,
             chosen by length, replies, and depth.
           </p>
@@ -119,32 +119,37 @@ export function RundownView() {
   }
 
   return (
-    <div className="output rundown">
-      <div className="output-toolbar">
+    <div className="mx-auto max-w-[720px] px-8 pb-[120px]">
+      <div className="sticky top-0 z-2 flex items-center gap-2.5 bg-panel pt-3 pb-3.5 text-xs">
         {output.streaming ? (
           <>
-            <span className="pulse" />
-            <span className="muted">
+            <span className="size-[7px] shrink-0 rounded-full bg-accent animate-pulse-dot" />
+            <span className="text-muted">
               {prefetching && !output.text ? "Reading ahead…" : "Working through it…"}
             </span>
-            <div className="spacer" />
-            <button type="button" className="ghost-button" onClick={() => stopOutput("rundown")}>
+            <div className="flex-1" />
+            <GhostButton onClick={() => stopOutput("rundown")}>
               Stop
-            </button>
+            </GhostButton>
           </>
         ) : (
           <>
-            <div className="levels">
+            <div className="inline-flex gap-px rounded-lg bg-line-soft p-0.5">
               {LEVELS.map((entry) => (
                 <button
                   key={entry.key}
                   type="button"
-                  className={readLevel === entry.key ? "active" : ""}
+                  className={cn(
+                    "inline-flex items-baseline gap-[5px] rounded-md px-2.5 py-[3px] text-[11.5px] text-muted transition-[background,color] duration-[120ms]",
+                    readLevel === entry.key
+                      ? "bg-panel font-semibold text-fg shadow-[0_1px_2px_rgba(0,0,0,0.12)]"
+                      : "hover:text-fg",
+                  )}
                   title={entry.hint}
                   onClick={() => setReadLevel(entry.key)}
                 >
                   {entry.label}
-                  <span className="level-time">{levelTimes[entry.key]}m</span>
+                  <span className="text-[10.5px] tabular-nums opacity-70">{levelTimes[entry.key]}m</span>
                 </button>
               ))}
             </div>
@@ -156,21 +161,21 @@ export function RundownView() {
                     : "Point at a marker to read the comment behind a claim."
                 }
               >
-                <span className="muted sources-count">
+                <span className="cursor-default border-b border-dotted border-line text-muted">
                   cites {sourceCount} {sourceCount === 1 ? "comment" : "comments"}
                 </span>
               </Tooltip>
             ) : null}
             {report && report.problems > 0 ? (
-              <span className="verify bad">{report.problems} sources not in this thread</span>
+              <span className="rounded-full bg-[color-mix(in_srgb,var(--bad)_12%,transparent)] px-2 py-0.5 text-[11.5px] font-[550] text-bad">{report.problems} sources not in this thread</span>
             ) : null}
             {output.durationMs ? (
               <>
-                <span className="dot">·</span>
-                <span className="muted">{formatDuration(output.durationMs)}</span>
+                <span className="opacity-50">·</span>
+                <span className="text-muted">{formatDuration(output.durationMs)}</span>
               </>
             ) : null}
-            <div className="spacer" />
+            <div className="flex-1" />
             <Menu
               ariaLabel="Copy this briefing"
               side="bottom"
@@ -197,13 +202,13 @@ export function RundownView() {
                 },
               ]}
             />
-            <button
-              type="button"
-              className="ghost-button"
+            <GhostButton
+             
+             
               onClick={() => runOutput("rundown", true)}
             >
               Rewrite
-            </button>
+            </GhostButton>
           </>
         )}
       </div>
@@ -212,19 +217,19 @@ export function RundownView() {
         <InlineError message={output.error} onRetry={() => runOutput("rundown", true)} />
       ) : null}
 
-      <article className="rundown-body" data-selection-source="rundown">
+      <article className="max-w-[640px] pt-1.5 [&_.md]:text-[15px] [&_.md]:leading-[1.68] [&_.md]:text-fg-soft [&_.md>p:first-child]:mb-[1.4em] [&_.md>p:first-child]:text-[17px] [&_.md>p:first-child]:leading-[1.55] [&_.md>p:first-child]:text-fg [&_.md_h2]:mt-[2em] [&_.md_h2]:mb-[0.65em] [&_.md_h2]:text-[15.5px] [&_.md_h2]:font-[620] [&_.md_h2]:tracking-[-0.008em] [&_.md_h2]:text-fg [&_.md_h2:first-child]:mt-0 [&_.md_li]:mb-[0.45em]" data-selection-source="rundown">
         {output.streaming && !output.text ? (
           <OutputSkeleton />
         ) : (
           <>
             <Markdown source={body} footnotes />
-            {output.streaming ? <span className="caret" /> : null}
+            {output.streaming ? <span className="ml-0.5 inline-block h-[15px] w-[7px] bg-accent align-text-bottom animate-caret" /> : null}
             {readLevel !== "full" && !output.streaming ? (
-              <p className="level-note">
+              <p className="mt-[18px] mb-0 text-xs text-muted">
                 Reading the {readLevel}.{" "}
-                <button type="button" className="link" onClick={() => setReadLevel("full")}>
+                <LinkButton onClick={() => setReadLevel("full")}>
                   Show the full briefing
-                </button>
+                </LinkButton>
               </p>
             ) : null}
           </>
@@ -232,9 +237,9 @@ export function RundownView() {
       </article>
 
       {!output.streaming && report && report.problems > 0 ? (
-        <section className="sources-problem">
+        <section className="mt-10 max-w-[640px] rounded-[10px] border border-bad bg-[color-mix(in_srgb,var(--bad)_7%,transparent)] px-4 py-3.5 [&>h2]:mb-1.5 [&>h2]:text-xs [&>h2]:font-semibold [&>h2]:text-bad [&_ul]:mt-2 [&_ul]:pl-[18px] [&_ul]:text-xs [&_ul]:text-bad">
           <h2>Unverified sources</h2>
-          <p className="fine">
+          <p className="text-xs leading-[1.5] text-muted">
             These ids are not comments in this thread, so any claim resting on them is
             unsupported.
           </p>
