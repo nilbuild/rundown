@@ -7,6 +7,7 @@
     <img alt="Tauri" src="https://img.shields.io/badge/Tauri-2-c2521c" />
     <img alt="Works with Claude and Codex" src="https://img.shields.io/badge/Claude%20%7C%20Codex-CLI-1c1b1a" />
   </p>
+  <img src=".github/screenshot.png" alt="A thread open in Rundown, with the briefing in the middle and a chat about it on the right" width="900" />
 </div>
 
 A decent HN post can have 800 comments hanging off a 4,000 word article. Somewhere in
