@@ -28,10 +28,15 @@ subscription you are signed in to. Nothing is stored anywhere but your own machi
 - **Library**: search what you have read, or synthesise several threads at once
 - **Reader**: the linked article as clean markdown
 
-## Running it
+## Install
+
+[Download the latest release](https://github.com/nilbuild/rundown/releases/latest)
+— one universal `.dmg` for Apple Silicon and Intel. It updates itself after that.
 
 Needs [Claude Code](https://claude.com/claude-code) or the
 [Codex CLI](https://developers.openai.com/codex/cli) installed and signed in.
+
+## Building it
 
 ```sh
 pnpm install

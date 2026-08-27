@@ -33,6 +33,8 @@ pub(crate) const ARTICLE_TTL: i64 = 60 * 60 * 24 * 14;
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
+        .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_window_state::Builder::default().build())
         .manage(Registry::default())
         .setup(|app| {

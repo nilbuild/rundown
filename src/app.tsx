@@ -10,6 +10,7 @@ import { Library } from "~/components/library/library";
 import { SynthesisView } from "~/components/synthesis/synthesis-view";
 import { SelectionPopover } from "~/components/chat/selection-popover";
 import { cn } from "~/utils/classname";
+import { UpdateNotice } from "~/components/ui/update-notice";
 
 export default function App() {
   const bootstrap = useApp((state) => state.bootstrap);
@@ -98,6 +99,7 @@ export default function App() {
       <PresetsDialog />
       <Library />
       <SelectionPopover />
+      <UpdateNotice />
     </div>
   );
 }
