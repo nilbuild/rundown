@@ -1,187 +1,44 @@
-# Rundown
+<div align="center">
+  <img src="src-tauri/icons/icon.png" alt="Rundown" width="88" height="88" />
+  <h1>Rundown</h1>
+  <p>A Hacker News client that summarises long threads and lets you chat with them.</p>
+  <p>
+    <img alt="License" src="https://img.shields.io/badge/license-MIT-2f7d55" />
+    <img alt="Tauri" src="https://img.shields.io/badge/Tauri-2-c2521c" />
+    <img alt="Works with Claude and Codex" src="https://img.shields.io/badge/Claude%20%7C%20Codex-CLI-1c1b1a" />
+  </p>
+</div>
 
-A macOS Hacker News client that reads threads for you, and can prove it read them.
+A decent HN post can have 800 comments hanging off a 4,000 word article. Somewhere in
+there are the four things worth knowing, and the only way to find them is to read the lot.
 
-Rundown is built around one idea: an AI summary of a discussion is only useful if you can
-get back to the actual sentence someone wrote. Every quote in a generated digest carries
-its author and its comment id, and every one of them is checked against the real thread
-before you see it. Quotes that cannot be found are labelled, not quietly shipped.
+Rundown gives you the short version: what the article says, what the thread argued with it
+about, and a chat you can point at either. Every quote keeps the comment it came from and
+gets checked against the thread first, so you can go and read the real thing when it
+matters.
 
-All model calls run through the `claude` or `codex` CLI already installed on your Mac, so
-they use the subscription you are already signed in to. No API key is stored, and no
-account credentials pass through this app.
+It runs on the `claude` or `codex` CLI you already have installed, so it uses the
+subscription you are signed in to. Nothing is stored anywhere but your own machine.
 
-## What it does
+## Features
 
-**Read.** Six HN feeds, search, a comment tree with collapse and per-comment actions, and
-a reader view that strips the linked article down to markdown — images, tables, and code
-blocks included.
-
-Article extraction is readability followed by an HTML cleanup pass, because converters
-reliably break on two things: an `<a>` wrapping block content (embeds and cards, which have
-no markdown spelling and swallow the whole block into `[...]`), and `<img>` carrying
-`srcset` and framework attributes, which survives as a literal tag in the prose. Both are
-normalised before conversion, and a final pass strips any tag that still got through
-without touching autolinks, `a < b`, or fenced code.
-
-**Rundown.** The default tab, and the one to read if you only read one. It merges the article
-and the discussion into a single account of the subject, in plain prose, with no "commenters
-said" framing anywhere — where the thread corrects the article, the corrected version is what
-you get, near the top. Three reading depths, chosen from the toolbar with the cost of each shown: **Gist** is the
-opening line and the headings, **Skim** adds each section's opening point, **Full** is
-everything. One generation, three depths — the model is asked to make each section's first
-paragraph stand on its own, so skimming reads as prose rather than as a truncation.
-
-Sources are demoted to a small dot after the claim: hover it to read the comment behind that
-sentence, click to jump to it. Numbers and an end-of-page source list were tried and removed —
-a number is a pointer into a list, so without the list it is noise on every claim. Adjacent
-markers merge, so one dot can carry several sources.
-
-A briefing is paraphrase, so there is nothing to match verbatim. What is checked is that every
-source it points at is real — an invented comment id is flagged in the toolbar, marked red
-inline, and listed under "Unverified sources". Being able to check the paraphrase in one hover is the rest of the answer.
-
-**Digest.** Built to be scanned, not read. It opens with a verdict — read, skim, or skip —
-and the cost of each choice ("6 min here · 51 min in the thread"). Below that the thread's
-argument is an outline: every point is a heading that carries information plus one sentence
-stating it in full, so reading only the headings still gets you the thread. Quotes stay
-folded until you want the evidence. Disagreements are kept as disagreements, with both
-sides in the same section, and it ends with what the thread did not settle.
-
-**Ask.** Highlight anything — article, comment, or digest — and Explain, Challenge, or ask
-your own question. The whole thread and article are already in the model's context. The
-first question pays for that context; every follow-up resumes the same provider session and
-hits the prompt cache.
-
-**Presets.** Saved questions you can fire at any thread from the composer, and the same list
-seeds the starting suggestions. Ships with five — best takes, the disagreement, what surprised
-you, talking past it, what's wrong. Save any question you have typed, or edit the list with
-`⌘P`.
-
-**Read together.** Pick two or more stories in the Library and get one piece about what they
-add up to — the same force under different names, two threads that contradict each other, a
-claim in one that answers a question left open in another. It is told to say so and stop if
-they have nothing in common, because a forced theme is worse than none.
-
-Where a story already has a briefing, that is what gets used instead of its raw comments: the
-thread was already distilled once, so re-reading it would spend the budget to reach a worse
-version of the same thing. Three briefed threads cost about 8k tokens rather than three full
-packs. Past pieces are kept and can be reopened.
-
-**Library.** `⌘L` searches everything you have ever opened — every comment, briefing, digest
-and conversation — with FTS5 over a local index that fills itself as you read. Nothing to file.
-A hit opens the story on the right tab. With the search box empty it browses instead, grouped
-by the day you read them, which is where you pick stories to read together.
-
-**Find.** `⌘F` searches the open thread by body text or author, with match stepping and both
-the current hit and every other hit marked. `n` and `p` walk the top-level comments.
-
-**Prefetch.** A couple of seconds after you open a thread, the digest starts generating in
-the background, so it is finished or already streaming by the time you switch tabs. The
-delay means paging through the list with `j`/`k` costs nothing, and threads already
-digested, or with almost no comments, are skipped. Off in Settings if you'd rather not.
-
-**Models per job.** The digest defaults to the deepest model, the inline brief to the
-fastest, chat to the middle. Set individually in Settings, since the tradeoff is
-different for something you read once versus something you wait on.
-
-**New since last time.** Reopening a thread tells you how many comments arrived since you
-last looked, marks each one, and steps through them. The markers retire themselves once a
-comment has actually been on screen, so they stop claiming to be new after you have read
-them.
-
-## Verification
-
-Generated digests are parsed for `> quote` / `— [@author](hn:id)` pairs and each is
-classified:
-
-| Status | Meaning |
-| --- | --- |
-| verified | Found verbatim in the cited comment |
-| shortened (`≈`) | Found, but reflowed or elided with `...` |
-| unverified | The comment exists and does not contain that text |
-| wrong author | The text is real but belongs to someone else |
-| unknown id | No such comment in this thread |
-
-Matching tolerates the things a faithful quote legitimately changes — whitespace, smart
-quotes, markdown links, HN's `[1]` footnote markers — and tolerates declared elisions in
-proportion to how many ellipses the quote contains. It does not tolerate words that are not
-there. `cargo test --lib` covers both directions, including a fabricated quote that must
-fail and a heavily elided real one that must pass.
+- **Briefing**: article and thread as one account, at three reading depths
+- **Digest**: the discussion as an outline, each point backed by quotes
+- **Chat**: ask about the thread; it is already loaded
+- **Library**: search what you have read, or synthesise several threads at once
+- **Reader**: the linked article as clean markdown
 
 ## Running it
 
-Requires Node 20+, Rust, and at least one of the `claude` or `codex` CLIs on your PATH.
+Needs [Claude Code](https://claude.com/claude-code) or the
+[Codex CLI](https://developers.openai.com/codex/cli) installed and signed in.
 
 ```sh
 pnpm install
-pnpm test               # frontend unit tests
-pnpm tauri dev          # development
-pnpm tauri build        # produces src-tauri/target/release/bundle/macos/Rundown.app
+pnpm tauri dev      # run
+pnpm tauri build    # build the app
 ```
 
-To check the pipeline end to end against a real thread without opening the app:
+## License
 
-```sh
-cd src-tauri
-cargo run --example e2e -- 49273478 sonnet          # fetch, digest, verify
-cargo run --example e2e -- 49273478 sonnet out.md   # re-verify a saved digest
-cargo run --example synth -- sonnet 49321298 49371857   # cross-thread synthesis
-```
-
-## Keyboard
-
-| | |
-| --- | --- |
-| `⌘K` | Command palette (type `?` to search HN) |
-| `⌘F` | Find in thread (`enter` / `⇧enter` to step) |
-| `j` / `k` | Move through the story list |
-| `n` / `p` | Next / previous top-level comment |
-| `space` / `⇧space` | Page down / up in the reader |
-| `↑` `↓` `PgUp` `PgDn` `Home` `End` | Scroll the reader |
-| `⌘1`–`⌘4` | Rundown, Article, Comments, Digest |
-| `⌘D` | Digest this thread |
-| `⌘\` | Show or hide the chat pane |
-| `⌘R` | Reload the thread, bypassing cache |
-| `⌘L` | Search everything you have read |
-| `⌘P` | Presets |
-| `⌘,` | Settings |
-
-## How it is put together
-
-```
-src-tauri/src/
-  hn.rs        Firebase for feed order; Algolia for comment trees where it has
-               them, Firebase walked concurrently where it does not
-  article.rs   Fetch and reduce a linked page to markdown
-  prompts.rs   Prompt text and budget-aware context packing
-  ai.rs        Runs claude/codex as a subprocess, streams deltas back as events
-  verify.rs    Checks every quote against the thread it claims to come from
-  store.rs     SQLite: cache, generated output, chat sessions, settings
-src/
-  state/app.ts Single zustand store
-  components/  Sidebar, Reader, ChatPane, Markdown, palette
-```
-
-Model runs are spawned with all tools disabled, so a run is pure inference: no file access,
-no permission prompts, and nothing that can wander. One-shot runs do not persist a session;
-chat turns do, so they can be resumed.
-
-Threads larger than the context budget are packed by a score that favours substantial,
-well-replied-to, shallow comments. When that happens the digest screen says how many of the
-thread's comments were actually sent, rather than implying full coverage.
-
-## The icon
-
-`src-tauri/icons/source.svg` is the master. Regenerate the set with:
-
-```sh
-rsvg-convert -w 1024 -h 1024 src-tauri/icons/source.svg -o /tmp/icon.png
-pnpm tauri icon /tmp/icon.png && rm -rf src-tauri/icons/android src-tauri/icons/ios
-```
-
-## Data
-
-Threads, articles, generated output, and chat sessions live in one SQLite file at
-`~/Library/Application Support/rundown/rundown.sqlite3`. Nothing leaves the machine except the
-text sent to the model you picked.
+[MIT](LICENSE) © Kamran Ahmed
