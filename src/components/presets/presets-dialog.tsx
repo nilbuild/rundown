@@ -2,7 +2,9 @@ import { useState } from "react";
 import { Dialog } from "~/components/ui/dialog";
 import { useApp } from "~/stores/app";
 import { Trash2 } from "lucide-react";
-import { GhostButton, IconButton, PrimaryButton } from "~/components/ui/button";
+import { GhostButton } from "~/components/ui/ghost-button";
+import { IconButton } from "~/components/ui/icon-button";
+import { PrimaryButton } from "~/components/ui/primary-button";
 import { cn } from "~/utils/classname";
 
 export function PresetsDialog() {

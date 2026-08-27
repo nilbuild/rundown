@@ -1,6 +1,6 @@
 import type { StateCreator } from "zustand";
 import type { AppState } from "./types";
-import type { Thread } from "~/types";
+import type { Thread } from "~/lib/api/reading";
 
 export interface CommentsSlice {
   commentQuery: string;

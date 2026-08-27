@@ -1,19 +1,8 @@
 import type { StateCreator } from "zustand";
-import * as api from "~/lib/api";
+import * as settingsApi from "~/lib/api/settings";
 import type { AppState } from "./types";
 import { cancelPrefetch } from "./prefetch";
-import type {
-  ModelOption,
-  ModelSlot,
-  Models,
-  PrefetchMode,
-  Preset,
-  Provider,
-  ProviderModels,
-  ProviderStatus,
-  RateLimit,
-  ReadLevel,
-} from "~/types";
+import type { ModelOption, ModelSlot, Models, PrefetchMode, Preset, Provider, ProviderModels, ProviderStatus, RateLimit, ReadLevel } from "~/lib/api/settings";
 
 export interface SettingsSlice {
   provider: Provider;
@@ -70,10 +59,10 @@ export const createSettingsSlice: StateCreator<AppState, [], [], SettingsSlice> 
       models: withDefaults(provider, get().modelOverrides),
       rateLimit: null,
     });
-    await api.settingsSet("provider", provider).catch(() => undefined);
-    const modelOptions = await api.availableModels(provider).catch(() => [] as ModelOption[]);
+    await settingsApi.settingsSet("provider", provider).catch(() => undefined);
+    const modelOptions = await settingsApi.availableModels(provider).catch(() => [] as ModelOption[]);
     set({ modelOptions, modelResolved: {} });
-    api
+    settingsApi
       .resolveModels(provider)
       .then((modelResolved) => {
         // The reader may have switched back while the probe was running.
@@ -94,14 +83,14 @@ export const createSettingsSlice: StateCreator<AppState, [], [], SettingsSlice> 
       [provider]: { ...(current[provider] ?? {}), [slot]: model },
     };
     set({ modelOverrides, models: withDefaults(provider, modelOverrides) });
-    await api.settingsSet("models", modelOverrides).catch(() => undefined);
+    await settingsApi.settingsSet("models", modelOverrides).catch(() => undefined);
   },
   resetModels: async () => {
     const provider = get().provider;
     const modelOverrides = { ...get().modelOverrides };
     delete modelOverrides[provider];
     set({ modelOverrides, models: withDefaults(provider, modelOverrides) });
-    await api.settingsSet("models", modelOverrides).catch(() => undefined);
+    await settingsApi.settingsSet("models", modelOverrides).catch(() => undefined);
   },
   addPreset: async (label, prompt) => {
     const trimmedLabel = label.trim();
@@ -118,7 +107,7 @@ export const createSettingsSlice: StateCreator<AppState, [], [], SettingsSlice> 
       },
     ];
     set({ presets });
-    await api.settingsSet("presets", presets).catch(() => undefined);
+    await settingsApi.settingsSet("presets", presets).catch(() => undefined);
   },
   updatePreset: async (id, label, prompt) => {
     const trimmedLabel = label.trim();
@@ -130,12 +119,12 @@ export const createSettingsSlice: StateCreator<AppState, [], [], SettingsSlice> 
       preset.id === id ? { ...preset, label: trimmedLabel, prompt: trimmedPrompt } : preset,
     );
     set({ presets });
-    await api.settingsSet("presets", presets).catch(() => undefined);
+    await settingsApi.settingsSet("presets", presets).catch(() => undefined);
   },
   removePreset: async (id) => {
     const presets = get().presets.filter((preset) => preset.id !== id);
     set({ presets });
-    await api.settingsSet("presets", presets).catch(() => undefined);
+    await settingsApi.settingsSet("presets", presets).catch(() => undefined);
   },
   runPreset: async (id) => {
     const preset = get().presets.find((entry) => entry.id === id);
@@ -147,7 +136,7 @@ export const createSettingsSlice: StateCreator<AppState, [], [], SettingsSlice> 
   },
   setReadLevel: async (level) => {
     set({ readLevel: level });
-    await api.settingsSet("readLevel", level).catch(() => undefined);
+    await settingsApi.settingsSet("readLevel", level).catch(() => undefined);
   },
   setPrefetch: async (mode) => {
     set({ prefetch: mode });
@@ -155,7 +144,7 @@ export const createSettingsSlice: StateCreator<AppState, [], [], SettingsSlice> 
       cancelPrefetch();
       set({ prefetchPending: false });
     }
-    await api.settingsSet("prefetch", mode).catch(() => undefined);
+    await settingsApi.settingsSet("prefetch", mode).catch(() => undefined);
   },
 });
 

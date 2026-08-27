@@ -1,16 +1,14 @@
 import type { StateCreator } from "zustand";
-import * as api from "~/lib/api";
+import * as outputsApi from "~/lib/api/outputs";
+import * as readingApi from "~/lib/api/reading";
 import type { AppState } from "./types";
-import type {
-  Article,
-  Coverage,
-  Thread,
-} from "~/types";
-import type { OutputKind } from "~/types";
+import type { Article, Coverage, Thread } from "~/lib/api/reading";
+import type { OutputKind } from "~/lib/api/outputs";
 import type { Tab } from "./types";
 import { cancelPrefetch } from "./prefetch";
 import { emptyOutput } from "./outputs";
 import { freshIds } from "./comments";
+import * as chatApi from "~/lib/api/chat";
 
 export interface ThreadSlice {
   tab: Tab;
@@ -71,11 +69,11 @@ export const createThreadSlice: StateCreator<AppState, [], [], ThreadSlice> = (
     const leaving = get();
     for (const output of Object.values(leaving.outputs)) {
       if (output.streaming && output.runId) {
-        api.cancelRun(output.runId).catch(() => undefined);
+        outputsApi.cancelRun(output.runId).catch(() => undefined);
       }
     }
     if (leaving.chatBusy && leaving.chatRunId) {
-      api.cancelRun(leaving.chatRunId).catch(() => undefined);
+      outputsApi.cancelRun(leaving.chatRunId).catch(() => undefined);
     }
 
     set({
@@ -108,7 +106,7 @@ export const createThreadSlice: StateCreator<AppState, [], [], ThreadSlice> = (
     });
 
     try {
-      const view = await api.loadThread(id);
+      const view = await readingApi.loadThread(id);
       if (get().selectedId !== id) {
         return;
       }
@@ -121,7 +119,7 @@ export const createThreadSlice: StateCreator<AppState, [], [], ThreadSlice> = (
         newIds: freshIds(thread, view.lastVisit),
       });
 
-      api
+      chatApi
         .chatHistory(`story:${id}`)
         .then((messages) => {
           if (get().selectedId !== id) {
@@ -131,7 +129,7 @@ export const createThreadSlice: StateCreator<AppState, [], [], ThreadSlice> = (
         })
         .catch(() => undefined);
 
-      api
+      readingApi
         .coverage(id)
         .then((coverage) => {
           if (get().selectedId !== id) {
@@ -142,7 +140,7 @@ export const createThreadSlice: StateCreator<AppState, [], [], ThreadSlice> = (
         .catch(() => undefined);
 
       for (const kind of ["rundown", "digest", "brief"] as OutputKind[]) {
-        api
+        outputsApi
           .cachedOutput(id, kind)
           .then((cached) => {
             if (!cached || get().selectedId !== id) {
@@ -165,7 +163,7 @@ export const createThreadSlice: StateCreator<AppState, [], [], ThreadSlice> = (
 
       if (thread.url) {
         set({ articleLoading: true });
-        api
+        readingApi
           .loadArticle(thread.url)
           .then((article) => {
             if (get().selectedId !== id) {
@@ -194,7 +192,7 @@ export const createThreadSlice: StateCreator<AppState, [], [], ThreadSlice> = (
   openItemRef: async (id) => {
     set({ loadingThread: true, threadError: null });
     try {
-      const ref = await api.resolveItem(id);
+      const ref = await readingApi.resolveItem(id);
       await get().selectStory(ref.storyId);
       if (ref.commentId !== null) {
         get().jumpToComment(ref.commentId);
@@ -211,7 +209,7 @@ export const createThreadSlice: StateCreator<AppState, [], [], ThreadSlice> = (
     }
     set({ loadingThread: true, threadError: null });
     try {
-      const view = await api.loadThread(id, true);
+      const view = await readingApi.loadThread(id, true);
       set({
         thread: view.thread,
         loadingThread: false,
@@ -222,7 +220,7 @@ export const createThreadSlice: StateCreator<AppState, [], [], ThreadSlice> = (
       if (view.thread.url) {
         set({ articleLoading: true, articleError: null });
         try {
-          const article = await api.loadArticle(view.thread.url, true);
+          const article = await readingApi.loadArticle(view.thread.url, true);
           set({ article, articleLoading: false });
         } catch (err) {
           set({ articleLoading: false, articleError: String(err) });
@@ -239,7 +237,7 @@ export const createThreadSlice: StateCreator<AppState, [], [], ThreadSlice> = (
     }
     set({ articleLoading: true, articleError: null });
     try {
-      const article = await api.loadArticle(thread.url, true);
+      const article = await readingApi.loadArticle(thread.url, true);
       set({ article, articleLoading: false });
     } catch (err) {
       set({ articleLoading: false, articleError: String(err) });

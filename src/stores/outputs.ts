@@ -1,8 +1,8 @@
 import type { StateCreator } from "zustand";
-import * as api from "~/lib/api";
+import * as outputsApi from "~/lib/api/outputs";
 import { newRunId, trackRun } from "~/lib/runs";
 import type { AppState } from "./types";
-import type { OutputKind } from "~/types";
+import type { OutputKind } from "~/lib/api/outputs";
 import type { OutputState } from "./types";
 import { cancelPrefetch, startPrefetch } from "./prefetch";
 
@@ -92,7 +92,7 @@ export const createOutputsSlice: StateCreator<AppState, [], [], OutputsSlice> = 
       },
     });
 
-    await api
+    await outputsApi
       .generate({
         runId,
         kind,
@@ -110,7 +110,7 @@ export const createOutputsSlice: StateCreator<AppState, [], [], OutputsSlice> = 
     if (!runId) {
       return;
     }
-    await api.cancelRun(runId).catch(() => undefined);
+    await outputsApi.cancelRun(runId).catch(() => undefined);
     set((current) => ({
       outputs: {
         ...current.outputs,

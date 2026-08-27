@@ -2,14 +2,17 @@ import { useEffect, useState } from "react";
 import { Trash2 } from "lucide-react";
 import { useApp } from "~/stores/app";
 import { Markdown } from "~/components/markdown/markdown";
-import { OutputSkeleton } from "~/components/ui/skeleton";
+import { OutputSkeleton } from "~/components/ui/output-skeleton";
 import { ErrorState } from "~/components/ui/error-state";
 import { Menu } from "~/components/ui/menu";
 import { ChevronDown } from "lucide-react";
 import { toPlainMarkdown, toPortableMarkdown } from "~/utils/export";
 import { countWords, minutes } from "~/utils/digest";
 import { formatDate } from "~/utils/format";
-import { GhostButton, IconButton, LinkButton, PrimaryButton } from "~/components/ui/button";
+import { GhostButton } from "~/components/ui/ghost-button";
+import { IconButton } from "~/components/ui/icon-button";
+import { LinkButton } from "~/components/ui/link-button";
+import { PrimaryButton } from "~/components/ui/primary-button";
 import { cn } from "~/utils/classname";
 
 export function SynthesisView() {

@@ -1,11 +1,13 @@
+import { Highlighted } from "~/components/library/highlighted";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Dialog } from "@base-ui-components/react/dialog";
 import { Search } from "lucide-react";
 import { useApp } from "~/stores/app";
-import { librarySearch, libraryStats, readingHistory } from "~/lib/api";
+import { librarySearch, libraryStats, readingHistory } from "~/lib/api/library";
 import { formatDate } from "~/utils/format";
-import type { HistoryEntry, LibraryHit, LibraryStats } from "~/types";
-import { GhostButton, PrimaryButton } from "~/components/ui/button";
+import type { HistoryEntry, LibraryHit, LibraryStats } from "~/lib/api/library";
+import { GhostButton } from "~/components/ui/ghost-button";
+import { PrimaryButton } from "~/components/ui/primary-button";
 import { cn } from "~/utils/classname";
 
 const KIND_LABEL: Record<string, string> = {
@@ -16,31 +18,6 @@ const KIND_LABEL: Record<string, string> = {
   chat: "Chat",
 };
 
-/// FTS5 marks matches with <b>. Rendering that as text would show the tags, and
-/// rendering it as HTML would trust the corpus, so the marked runs are split out
-/// and rebuilt as elements.
-function Highlighted(props: { snippet: string }) {
-  const parts = useMemo(() => props.snippet.split(/(<b>|<\/b>)/), [props.snippet]);
-  let on = false;
-  return (
-    <>
-      {parts.map((part, index) => {
-        if (part === "<b>") {
-          on = true;
-          return null;
-        }
-        if (part === "</b>") {
-          on = false;
-          return null;
-        }
-        if (!part) {
-          return null;
-        }
-        return on ? <mark key={index}>{part}</mark> : <span key={index}>{part}</span>;
-      })}
-    </>
-  );
-}
 
 export function Library() {
   const open = useApp((state) => state.libraryOpen);

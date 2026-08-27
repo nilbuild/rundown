@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useApp } from "~/stores/app";
-import type { FeedName } from "~/types";
+import type { FeedName } from "~/lib/api/reading";
 import { cn } from "~/utils/classname";
 
 interface Command {

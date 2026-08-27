@@ -1,10 +1,7 @@
 import type { StateCreator } from "zustand";
-import * as api from "~/lib/api";
+import * as readingApi from "~/lib/api/reading";
 import type { AppState } from "./types";
-import type {
-  FeedName,
-  Story,
-} from "~/types";
+import type { FeedName, Story } from "~/lib/api/reading";
 
 const PAGE = 30;
 
@@ -53,7 +50,7 @@ export const createFeedSlice: StateCreator<AppState, [], [], FeedSlice> = (
   refreshFeed: async (manual = false) => {
     set({ loadingFeed: true, feedError: null, refreshing: manual });
     try {
-      const stories = await api.loadFeed(get().feed, 0, PAGE);
+      const stories = await readingApi.loadFeed(get().feed, 0, PAGE);
       set({ stories, loadingFeed: false, refreshing: false, hasMore: stories.length === PAGE });
     } catch (err) {
       set({ loadingFeed: false, refreshing: false, feedError: String(err) });
@@ -66,7 +63,7 @@ export const createFeedSlice: StateCreator<AppState, [], [], FeedSlice> = (
     }
     set({ loadingMore: true });
     try {
-      const next = await api.loadFeed(state.feed, state.stories.length, PAGE);
+      const next = await readingApi.loadFeed(state.feed, state.stories.length, PAGE);
       const seen = new Set(state.stories.map((story) => story.id));
       const fresh = next.filter((story) => !seen.has(story.id));
       set((current) => ({
@@ -92,7 +89,7 @@ export const createFeedSlice: StateCreator<AppState, [], [], FeedSlice> = (
       stories: [],
     });
     try {
-      const stories = await api.searchStories(trimmed, false);
+      const stories = await readingApi.searchStories(trimmed, false);
       set({ stories, loadingFeed: false, refreshing: false, hasMore: false });
     } catch (err) {
       set({ loadingFeed: false, refreshing: false, feedError: String(err) });

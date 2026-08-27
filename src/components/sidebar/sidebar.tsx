@@ -1,13 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 import { useApp } from "~/stores/app";
 import { compact, timeAgo } from "~/utils/format";
-import { StoryListSkeleton } from "~/components/ui/skeleton";
+import { StoryListSkeleton } from "~/components/ui/story-list-skeleton";
 import { Tooltip } from "~/components/ui/tooltip";
-import { InlineError } from "~/components/ui/error-state";
+import { InlineError } from "~/components/ui/inline-error";
 import { parseItemRef } from "~/utils/hn-link";
-import type { FeedName } from "~/types";
+import type { FeedName } from "~/lib/api/reading";
 import { RotateCw, X } from "lucide-react";
 import { cn } from "~/utils/classname";
+import { useInfiniteScroll } from "~/hooks/use-infinite-scroll";
+import { useStoryKeys } from "~/hooks/use-story-keys";
 
 const FEEDS: { key: FeedName; label: string }[] = [
   { key: "top", label: "Top" },
@@ -51,52 +53,9 @@ export function Sidebar() {
     listRef.current?.scrollTo({ top: 0 });
   }, [feed, searching]);
 
-  useEffect(() => {
-    const sentinel = sentinelRef.current;
-    if (!sentinel) {
-      return;
-    }
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (!entries[0].isIntersecting) {
-          return;
-        }
-        loadMore();
-      },
-      { root: listRef.current, rootMargin: "300px" },
-    );
-    observer.observe(sentinel);
-    return () => observer.disconnect();
-  }, [loadMore, stories.length]);
+  useInfiniteScroll(sentinelRef, listRef, loadMore, [loadMore, stories.length]);
 
-  useEffect(() => {
-    function onKeyDown(event: KeyboardEvent) {
-      const target = event.target as HTMLElement | null;
-      if (target && ["INPUT", "TEXTAREA"].includes(target.tagName)) {
-        return;
-      }
-      if (event.metaKey || event.ctrlKey || event.altKey) {
-        return;
-      }
-      if (event.key !== "j" && event.key !== "k") {
-        return;
-      }
-
-      const index = stories.findIndex((story) => story.id === selectedId);
-      const next = event.key === "j" ? index + 1 : index - 1;
-      if (next < 0 || next >= stories.length) {
-        return;
-      }
-      event.preventDefault();
-      selectStory(stories[next].id);
-      document
-        .querySelector(`[data-story-id="${stories[next].id}"]`)
-        ?.scrollIntoView({ block: "nearest" });
-    }
-
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [stories, selectedId, selectStory]);
+  useStoryKeys(stories, selectedId, selectStory);
 
   return (
     <aside className="flex min-h-0 flex-col border-r border-line bg-panel-2">

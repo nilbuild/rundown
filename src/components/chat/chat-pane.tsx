@@ -1,4 +1,4 @@
-import { InlineError } from "~/components/ui/error-state";
+import { InlineError } from "~/components/ui/inline-error";
 import { useEffect, useRef, useState } from "react";
 import { useApp } from "~/stores/app";
 import { Markdown } from "~/components/markdown/markdown";
@@ -7,8 +7,11 @@ import { Menu } from "~/components/ui/menu";
 import type { MenuEntry } from "~/components/ui/menu";
 import { Tooltip } from "~/components/ui/tooltip";
 import { ListFilter, X } from "lucide-react";
-import { GhostButton, IconButton, PrimaryButton } from "~/components/ui/button";
+import { GhostButton } from "~/components/ui/ghost-button";
+import { IconButton } from "~/components/ui/icon-button";
+import { PrimaryButton } from "~/components/ui/primary-button";
 import { cn } from "~/utils/classname";
+import { usePinnedScroll } from "~/hooks/use-pinned-scroll";
 
 export function ChatPane() {
   const thread = useApp((state) => state.thread);
@@ -37,22 +40,8 @@ export function ChatPane() {
   const [draft, setDraft] = useState("");
   const [naming, setNaming] = useState(false);
   const [presetName, setPresetName] = useState("");
-  const [pinned, setPinned] = useState(true);
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const { ref: scrollRef, pinned, setPinned, onScroll } = usePinnedScroll([messages.length, streaming]);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-
-  // Only follow the stream while the reader is already at the bottom. Scrolling
-  // up to re-read something must not be yanked back down on the next token.
-  useEffect(() => {
-    if (!pinned) {
-      return;
-    }
-    const node = scrollRef.current;
-    if (!node) {
-      return;
-    }
-    node.scrollTo({ top: node.scrollHeight, behavior: "smooth" });
-  }, [messages.length, streaming, pinned]);
 
   useEffect(() => {
     if (!selection) {
@@ -81,15 +70,6 @@ export function ChatPane() {
     setDraft("");
     setPinned(true);
     sendChat(value);
-  };
-
-  const onScroll = () => {
-    const node = scrollRef.current;
-    if (!node) {
-      return;
-    }
-    const distance = node.scrollHeight - node.scrollTop - node.clientHeight;
-    setPinned(distance < 60);
   };
 
   const presetEntries: MenuEntry[] = presets.map((preset) => ({

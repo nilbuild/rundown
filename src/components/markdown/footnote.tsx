@@ -1,8 +1,8 @@
 import { PreviewCard } from "@base-ui-components/react/preview-card";
 import { useApp } from "~/stores/app";
 import { isoAgo } from "~/utils/format";
-import type { Comment } from "~/types";
-import { LinkButton } from "~/components/ui/button";
+import type { Comment } from "~/lib/api/reading";
+import { LinkButton } from "~/components/ui/link-button";
 import { cn } from "~/utils/classname";
 
 function findComment(nodes: Comment[], id: number): Comment | null {

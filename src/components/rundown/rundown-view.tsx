@@ -1,16 +1,19 @@
 import { useMemo } from "react";
 import { useApp } from "~/stores/app";
 import { Markdown } from "~/components/markdown/markdown";
-import { OutputSkeleton } from "~/components/ui/skeleton";
-import { ErrorState, InlineError } from "~/components/ui/error-state";
+import { OutputSkeleton } from "~/components/ui/output-skeleton";
+import { ErrorState } from "~/components/ui/error-state";
+import { InlineError } from "~/components/ui/inline-error";
 import { Tooltip } from "~/components/ui/tooltip";
 import { countWords, mergeSourceRuns, minutes, renderLevel } from "~/utils/digest";
 import { formatDuration } from "~/utils/format";
-import type { ReadLevel } from "~/types";
+import type { ReadLevel } from "~/lib/api/settings";
 import { Menu } from "~/components/ui/menu";
 import { ChevronDown } from "lucide-react";
 import { toPlainMarkdown, toPortableMarkdown } from "~/utils/export";
-import { GhostButton, LinkButton, PrimaryButton } from "~/components/ui/button";
+import { GhostButton } from "~/components/ui/ghost-button";
+import { LinkButton } from "~/components/ui/link-button";
+import { PrimaryButton } from "~/components/ui/primary-button";
 import { cn } from "~/utils/classname";
 
 function countSources(markdown: string) {

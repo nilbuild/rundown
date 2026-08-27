@@ -1,10 +1,12 @@
 import { useApp } from "~/stores/app";
 import { Markdown } from "~/components/markdown/markdown";
-import { ArticleSkeleton, SkeletonLines } from "~/components/ui/skeleton";
+import { ArticleSkeleton } from "~/components/ui/article-skeleton";
+import { SkeletonLines } from "~/components/ui/skeleton-lines";
 import { ErrorState } from "~/components/ui/error-state";
-import { openExternal } from "~/lib/api";
+import { openExternal } from "~/lib/api/shell";
 import { readingTime } from "~/utils/format";
-import { GhostButton, LinkButton } from "~/components/ui/button";
+import { GhostButton } from "~/components/ui/ghost-button";
+import { LinkButton } from "~/components/ui/link-button";
 
 export function ArticleView() {
   const thread = useApp((state) => state.thread);

@@ -1,5 +1,6 @@
 import { create } from "zustand";
-import * as api from "~/lib/api";
+import * as readingApi from "~/lib/api/reading";
+import * as settingsApi from "~/lib/api/settings";
 import { watchRateLimit } from "~/lib/runs";
 import { createFeedSlice } from "./feed";
 import { createThreadSlice } from "./thread";
@@ -9,7 +10,7 @@ import { createChatSlice } from "./chat";
 import { createUiSlice } from "./ui";
 import { createSynthesisSlice } from "./synthesis";
 import { createSettingsSlice } from "./settings";
-import type { PrefetchMode, Preset, Provider, ReadLevel } from "~/types";
+import type { PrefetchMode, Preset, Provider, ReadLevel } from "~/lib/api/settings";
 import { DEFAULT_PRESETS, readOverrides, withDefaults } from "./settings";
 import type { AppState } from "./types";
 
@@ -29,9 +30,9 @@ export const useApp = create<AppState>()((set, get, store) => ({
     watchRateLimit((rateLimit) => set({ rateLimit }));
 
     const [settings, status, seen] = await Promise.all([
-      api.settingsAll().catch(() => ({}) as Record<string, unknown>),
-      api.providers().catch(() => null),
-      api.readIds().catch(() => [] as number[]),
+      settingsApi.settingsAll().catch(() => ({}) as Record<string, unknown>),
+      settingsApi.providers().catch(() => null),
+      readingApi.readIds().catch(() => [] as number[]),
     ]);
 
     const provider = (settings.provider as Provider) ?? "claude";
@@ -55,12 +56,12 @@ export const useApp = create<AppState>()((set, get, store) => ({
       readIds: new Set(seen),
     });
 
-    api
+    settingsApi
       .availableModels(provider)
       .then((modelOptions) => set({ modelOptions }))
       .catch(() => undefined);
 
-    api
+    settingsApi
       .resolveModels(provider)
       .then((modelResolved) => set({ modelResolved }))
       .catch(() => undefined);

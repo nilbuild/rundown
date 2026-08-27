@@ -4,13 +4,13 @@ import { ArticleView } from "~/components/article/article-view";
 import { CommentsView } from "~/components/comments/comments-view";
 import { OutputView } from "~/components/digest/output-view";
 import { RundownView } from "~/components/rundown/rundown-view";
-import { openExternal } from "~/lib/api";
-import { CommentsSkeleton } from "~/components/ui/skeleton";
+import { openExternal } from "~/lib/api/shell";
+import { CommentsSkeleton } from "~/components/ui/comments-skeleton";
 import { cn } from "~/utils/classname";
 import { ErrorState } from "~/components/ui/error-state";
 import { compact, hnLink, timeAgo } from "~/utils/format";
 import type { Tab } from "~/stores/app";
-import { LinkButton } from "~/components/ui/button";
+import { LinkButton } from "~/components/ui/link-button";
 
 const TABS: { key: Tab; label: string; hint: string }[] = [
   { key: "rundown", label: "Briefing", hint: "The whole story in plain words" },

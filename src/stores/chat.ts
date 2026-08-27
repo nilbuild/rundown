@@ -1,8 +1,9 @@
 import type { StateCreator } from "zustand";
-import * as api from "~/lib/api";
+import * as chatApi from "~/lib/api/chat";
+import * as outputsApi from "~/lib/api/outputs";
 import { newRunId, trackRun } from "~/lib/runs";
 import type { AppState } from "./types";
-import type { ChatMessage, Selection } from "~/types";
+import type { ChatMessage, Selection } from "~/lib/api/chat";
 
 export interface ChatSlice {
   chatMessages: ChatMessage[];
@@ -101,7 +102,7 @@ export const createChatSlice: StateCreator<AppState, [], [], ChatSlice> = (
       },
     });
 
-    await api
+    await chatApi
       .chatSend({
         runId,
         chatId: `story:${storyId}`,
@@ -124,7 +125,7 @@ export const createChatSlice: StateCreator<AppState, [], [], ChatSlice> = (
     if (!runId) {
       return;
     }
-    await api.cancelRun(runId).catch(() => undefined);
+    await outputsApi.cancelRun(runId).catch(() => undefined);
     set({ chatBusy: false, chatRunId: null, chatStreaming: "" });
   },
   resetChat: async () => {
@@ -132,7 +133,7 @@ export const createChatSlice: StateCreator<AppState, [], [], ChatSlice> = (
     if (!storyId) {
       return;
     }
-    await api.chatClear(`story:${storyId}`).catch(() => undefined);
+    await chatApi.chatClear(`story:${storyId}`).catch(() => undefined);
     set({ chatMessages: [], chatStreaming: "", chatError: null });
   },
   setChatOpen: (chatOpen) => set({ chatOpen }),

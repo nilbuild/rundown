@@ -1,8 +1,9 @@
 import type { StateCreator } from "zustand";
-import * as api from "~/lib/api";
+import * as outputsApi from "~/lib/api/outputs";
+import * as synthesisApi from "~/lib/api/synthesis";
 import { newRunId, trackRun } from "~/lib/runs";
 import type { AppState } from "./types";
-import type { Synthesis } from "~/types";
+import type { Synthesis } from "~/lib/api/synthesis";
 
 export interface SynthesisSlice {
   picked: Set<number>;
@@ -44,7 +45,7 @@ export const createSynthesisSlice: StateCreator<AppState, [], [], SynthesisSlice
   },
   clearPicked: () => set({ picked: new Set() }),
   loadSyntheses: async () => {
-    const syntheses = await api.synthesisList().catch(() => [] as Synthesis[]);
+    const syntheses = await synthesisApi.synthesisList().catch(() => [] as Synthesis[]);
     set({ syntheses });
   },
   openSynthesis: (id) => {
@@ -55,7 +56,7 @@ export const createSynthesisSlice: StateCreator<AppState, [], [], SynthesisSlice
     set({ view: "synthesis", activeSynthesis: id, synthesisText: found.markdown });
   },
   removeSynthesis: async (id) => {
-    await api.synthesisDelete(id).catch(() => undefined);
+    await synthesisApi.synthesisDelete(id).catch(() => undefined);
     if (get().activeSynthesis === id) {
       set({ activeSynthesis: null, synthesisText: "" });
     }
@@ -94,7 +95,7 @@ export const createSynthesisSlice: StateCreator<AppState, [], [], SynthesisSlice
       },
     });
 
-    await api
+    await synthesisApi
       .synthesise({
         runId,
         storyIds: Array.from(state.picked),
@@ -111,7 +112,7 @@ export const createSynthesisSlice: StateCreator<AppState, [], [], SynthesisSlice
     if (!runId) {
       return;
     }
-    await api.cancelRun(runId).catch(() => undefined);
+    await outputsApi.cancelRun(runId).catch(() => undefined);
     set({ synthesisBusy: false, synthesisRunId: null });
   },
 });

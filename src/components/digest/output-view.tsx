@@ -1,15 +1,17 @@
 import { useApp } from "~/stores/app";
 import { Markdown } from "~/components/markdown/markdown";
 import { formatDuration } from "~/utils/format";
-import { OutputSkeleton } from "~/components/ui/skeleton";
+import { OutputSkeleton } from "~/components/ui/output-skeleton";
 import { Tooltip } from "~/components/ui/tooltip";
 import { DigestReader } from "~/components/digest/digest-reader";
-import { ErrorState, InlineError } from "~/components/ui/error-state";
-import type { OutputKind, VerifyReport } from "~/types";
+import { ErrorState } from "~/components/ui/error-state";
+import { InlineError } from "~/components/ui/inline-error";
+import type { OutputKind, VerifyReport } from "~/lib/api/outputs";
 import { Menu } from "~/components/ui/menu";
 import { ChevronDown } from "lucide-react";
 import { toPlainMarkdown, toPortableMarkdown } from "~/utils/export";
-import { GhostButton, PrimaryButton } from "~/components/ui/button";
+import { GhostButton } from "~/components/ui/ghost-button";
+import { PrimaryButton } from "~/components/ui/primary-button";
 import { cn } from "~/utils/classname";
 
 interface Props {

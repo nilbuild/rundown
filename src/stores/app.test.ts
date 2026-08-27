@@ -1,4 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
+import * as settingsApi from "~/lib/api/settings";
 
 const handlers = new Map<string, Record<string, (arg: never) => void>>();
 
@@ -11,25 +12,41 @@ vi.mock("../lib/runs", () => ({
   watchRateLimit: () => () => undefined,
 }));
 
-vi.mock("../lib/api", () => ({
-  generate: vi.fn(async () => undefined),
-  cancelRun: vi.fn(async () => true),
-  settingsSet: vi.fn(async () => undefined),
-  settingsAll: vi.fn(async () => ({})),
-  providers: vi.fn(async () => null),
-  availableModels: vi.fn(async () => []),
-  resolveModels: vi.fn(async () => ({})),
+vi.mock("../lib/api/reading", () => ({
   readIds: vi.fn(async () => []),
   loadFeed: vi.fn(async () => []),
   loadThread: vi.fn(async () => ({ thread: null, newComments: null, lastVisit: null })),
   loadArticle: vi.fn(async () => null),
   searchStories: vi.fn(async () => []),
   coverage: vi.fn(async () => null),
+  resolveItem: vi.fn(async () => ({ storyId: 0, commentId: null })),
+}));
+
+vi.mock("../lib/api/outputs", () => ({
+  generate: vi.fn(async () => undefined),
+  cancelRun: vi.fn(async () => true),
   cachedOutput: vi.fn(async () => null),
+  cachedKinds: vi.fn(async () => []),
+}));
+
+vi.mock("../lib/api/chat", () => ({
   chatHistory: vi.fn(async () => []),
   chatSend: vi.fn(async () => undefined),
   chatClear: vi.fn(async () => undefined),
-  takeList: vi.fn(async () => []),
+}));
+
+vi.mock("../lib/api/synthesis", () => ({
+  synthesise: vi.fn(async () => undefined),
+  synthesisList: vi.fn(async () => []),
+  synthesisDelete: vi.fn(async () => undefined),
+}));
+
+vi.mock("../lib/api/settings", () => ({
+  settingsSet: vi.fn(async () => undefined),
+  settingsAll: vi.fn(async () => ({})),
+  providers: vi.fn(async () => null),
+  availableModels: vi.fn(async () => []),
+  resolveModels: vi.fn(async () => ({})),
 }));
 
 const { useApp } = await import("./app");
@@ -101,11 +118,10 @@ describe("model slots", () => {
   });
 
   it("persists only the slot that changed, under its provider", async () => {
-    const api = await import("../lib/api");
     await useApp.getState().setModelFor("chat", "haiku");
 
     expect(useApp.getState().modelOverrides).toEqual({ claude: { chat: "haiku" } });
-    expect(api.settingsSet).toHaveBeenLastCalledWith("models", { claude: { chat: "haiku" } });
+    expect(settingsApi.settingsSet).toHaveBeenLastCalledWith("models", { claude: { chat: "haiku" } });
   });
 
   it("keeps untouched slots on their defaults", async () => {

@@ -1,4 +1,4 @@
-import type { VerifyReport } from "~/types";
+import type { VerifyReport } from "~/lib/api/outputs";
 import type { FeedSlice } from "./feed";
 import type { ThreadSlice } from "./thread";
 import type { CommentsSlice } from "./comments";

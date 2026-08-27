@@ -1,5 +1,33 @@
 import { listen } from "@tauri-apps/api/event";
-import type { AiEvent, RateLimit, VerifyReport } from "~/types";
+import type { Provider, RateLimit } from "~/lib/api/settings";
+import type { VerifyReport } from "~/lib/api/outputs";
+
+export type AiEvent =
+  | {
+      kind: "started";
+      runId: string;
+      provider: Provider;
+      model: string | null;
+      sessionId: string | null;
+    }
+  | { kind: "delta"; runId: string; text: string }
+  | {
+      kind: "rateLimit";
+      runId: string;
+      status: string;
+      window: string | null;
+      resetsAt: number | null;
+    }
+  | {
+      kind: "done";
+      runId: string;
+      text: string;
+      sessionId: string | null;
+      durationMs: number;
+      costUsd: number | null;
+      report: VerifyReport | null;
+    }
+  | { kind: "error"; runId: string; message: string };
 
 export interface RunHandlers {
   onStart?: (model: string | null) => void;

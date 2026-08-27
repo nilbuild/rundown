@@ -26,8 +26,3 @@ export function Tooltip(props: Props) {
     </Base.Root>
   );
 }
-
-export function TooltipProvider(props: { children: ReactNode }) {
-  const { children } = props;
-  return <Base.Provider delay={350}>{children}</Base.Provider>;
-}

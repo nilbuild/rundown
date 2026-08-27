@@ -2,10 +2,12 @@ import { useEffect, useState } from "react";
 import { Dialog } from "~/components/ui/dialog";
 import { cn } from "~/utils/classname";
 import { useApp } from "~/stores/app";
-import { dataLocation, openExternal } from "~/lib/api";
+import { dataLocation } from "~/lib/api/settings";
+import { openExternal } from "~/lib/api/shell";
 import { Select } from "~/components/ui/select";
-import type { ModelSlot, PrefetchMode, Provider } from "~/types";
-import { GhostButton, LinkButton } from "~/components/ui/button";
+import type { ModelSlot, PrefetchMode, Provider } from "~/lib/api/settings";
+import { GhostButton } from "~/components/ui/ghost-button";
+import { LinkButton } from "~/components/ui/link-button";
 
 const SLOTS: { slot: ModelSlot; label: string; hint: string }[] = [
   { slot: "rundown", label: "Briefing", hint: "The thread summary — worth the deepest model" },

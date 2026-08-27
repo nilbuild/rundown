@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { Dialog as Base } from "@base-ui-components/react/dialog";
 import { X } from "lucide-react";
 import { cn } from "~/utils/classname";
-import { IconButton } from "~/components/ui/button";
+import { IconButton } from "~/components/ui/icon-button";
 
 interface Props {
   open: boolean;

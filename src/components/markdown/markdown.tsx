@@ -1,9 +1,9 @@
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
-import { openExternal } from "~/lib/api";
+import { openExternal } from "~/lib/api/shell";
 import { Footnote } from "~/components/markdown/footnote";
-import type { Citation, CitationStatus } from "~/types";
+import type { Citation, CitationStatus } from "~/lib/api/outputs";
 import { cn } from "~/utils/classname";
 
 interface Props {

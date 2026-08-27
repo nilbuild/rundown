@@ -3,9 +3,9 @@ import { useApp } from "~/stores/app";
 import { Markdown } from "~/components/markdown/markdown";
 import { Tooltip } from "~/components/ui/tooltip";
 import { countWords, minutes, parseDigest, verdictLabel } from "~/utils/digest";
-import type { Citation } from "~/types";
+import type { Citation } from "~/lib/api/outputs";
 import { ChevronDown } from "lucide-react";
-import { GhostButton } from "~/components/ui/button";
+import { GhostButton } from "~/components/ui/ghost-button";
 import { cn } from "~/utils/classname";
 
 interface Props {

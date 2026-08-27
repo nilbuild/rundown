@@ -1,5 +1,6 @@
-import { cn } from "~/utils/classname";
-import { GhostButton, PrimaryButton } from "~/components/ui/button";
+import { readable } from "~/components/ui/readable-error";
+import { GhostButton } from "~/components/ui/ghost-button";
+import { PrimaryButton } from "~/components/ui/primary-button";
 
 interface Props {
   title: string;
@@ -7,16 +8,6 @@ interface Props {
   onRetry?: () => void;
   retryLabel?: string;
   secondary?: { label: string; onClick: () => void };
-}
-
-/// Error text from a command arrives as a raw Rust/JS error string. Strip the
-/// noise so the reader sees the cause, not the plumbing.
-function readable(message: string) {
-  return message
-    .replace(/^Error:\s*/i, "")
-    .replace(/^error (sending|returned from) [^:]*:\s*/i, "")
-    .replace(/^invoke\S*\s*/i, "")
-    .trim();
 }
 
 function diagnose(message: string) {
@@ -60,30 +51,6 @@ export function ErrorState(props: Props) {
           </GhostButton>
         ) : null}
       </div>
-    </div>
-  );
-}
-
-/// Compact variant for errors that appear inside a pane that still has content.
-export function InlineError(props: {
-  message: string;
-  onRetry?: () => void;
-  className?: string;
-}) {
-  const { message, onRetry, className } = props;
-  return (
-    <div
-      className={cn(
-        "my-[10px] flex items-center gap-[10px] rounded-lg bg-[color-mix(in_srgb,var(--bad)_10%,transparent)] px-3 py-[9px] text-[12.5px] leading-[1.5] break-words text-bad",
-        className,
-      )}
-    >
-      <span>{readable(message)}</span>
-      {onRetry ? (
-        <button type="button" className="ml-auto whitespace-nowrap underline" onClick={onRetry}>
-          Retry
-        </button>
-      ) : null}
     </div>
   );
 }
