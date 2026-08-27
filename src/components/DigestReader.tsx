@@ -43,9 +43,13 @@ export function DigestReader(props: Props) {
   const digestMinutes = minutes(countWords(markdown));
   const threadMinutes = minutes(threadWords);
 
-  // Sections arriving mid-stream open themselves; there is nothing to hide yet
-  // and collapsing them as they land would be a moving target.
-  const isOpen = (index: number) => (streaming ? true : open.has(index));
+  // Only the point being written stays open. Holding every section open until
+  // the run ends and then collapsing them all at once made a finished digest
+  // look like it had thrown its work away; folding each one as the model moves
+  // past it settles the page a section at a time, and leaves nothing to snap
+  // shut at the end but the last one.
+  const isOpen = (index: number) =>
+    streaming ? index === parsed.sections.length - 1 : open.has(index);
 
   const toggle = (index: number) => {
     const next = new Set(open);
