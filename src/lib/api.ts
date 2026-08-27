@@ -142,6 +142,10 @@ export function resolveModels(provider: Provider) {
   return invoke<Record<string, string>>("resolve_models", { provider });
 }
 
+export function resolveItem(id: number) {
+  return invoke<{ storyId: number; commentId: number | null }>("resolve_item", { id });
+}
+
 export function providers() {
   return invoke<ProviderStatus>("providers");
 }

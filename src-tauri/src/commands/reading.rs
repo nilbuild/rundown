@@ -1,5 +1,5 @@
 use crate::article::{self, Article};
-use crate::hn::{self, Story, Thread};
+use crate::hn::{self, ItemRef, Story, Thread};
 use crate::prompts;
 use crate::store::Store;
 use crate::{fail, Fallible, ARTICLE_TTL, THREAD_TTL};
@@ -120,4 +120,12 @@ pub(crate) async fn coverage(store: State<'_, Store>, story_id: u64) -> Fallible
         total: stats.total,
         chars: stats.chars,
     })
+}
+
+/// Opens whatever a pasted Hacker News link points at.
+#[tauri::command]
+pub(crate) async fn resolve_item(id: u64) -> Fallible<ItemRef> {
+    hn::resolve_item(id)
+        .await
+        .map_err(|err| format!("Could not open that link: {err}"))
 }

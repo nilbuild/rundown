@@ -28,6 +28,7 @@ export interface ThreadSlice {
   jumpTarget: number | null;
   selectStory: (id: number) => Promise<void>;
   reloadStory: () => Promise<void>;
+  openItemRef: (id: number) => Promise<void>;
   setTab: (tab: Tab) => void;
   toggleCollapse: (id: number) => void;
   collapseAll: () => void;
@@ -188,6 +189,21 @@ export const createThreadSlice: StateCreator<AppState, [], [], ThreadSlice> = (
       set({ loadingThread: false, threadError: String(err) });
     }
   },
+  /// A pasted link can point at a comment as easily as a story, so the id is
+  /// resolved to the story holding it and the reader lands on the comment.
+  openItemRef: async (id) => {
+    set({ loadingThread: true, threadError: null });
+    try {
+      const ref = await api.resolveItem(id);
+      await get().selectStory(ref.storyId);
+      if (ref.commentId !== null) {
+        get().jumpToComment(ref.commentId);
+      }
+    } catch (err) {
+      set({ loadingThread: false, threadError: String(err) });
+    }
+  },
+
   reloadStory: async () => {
     const id = get().selectedId;
     if (!id) {

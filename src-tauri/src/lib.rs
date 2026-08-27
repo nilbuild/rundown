@@ -55,6 +55,7 @@ pub fn run() {
             commands::reading::load_article,
             commands::reading::read_ids,
             commands::reading::coverage,
+            commands::reading::resolve_item,
             commands::generate::generate,
             commands::library::cached_output,
             commands::library::cached_kinds,

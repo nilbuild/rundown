@@ -6,6 +6,7 @@ import { compact, timeAgo } from "~/utils/format";
 import { StoryListSkeleton } from "~/components/ui/skeleton";
 import { Tooltip } from "~/components/ui/tooltip";
 import { InlineError } from "~/components/ui/error-state";
+import { parseItemRef } from "~/utils/hn-link";
 import type { FeedName } from "~/types";
 import { RotateCw, X } from "lucide-react";
 
@@ -26,6 +27,7 @@ export function Sidebar() {
   const selectedId = useApp((state) => state.selectedId);
   const readIds = useApp((state) => state.readIds);
   const searching = useApp((state) => state.searching);
+  const openItemRef = useApp((state) => state.openItemRef);
   const searchQuery = useApp((state) => state.searchQuery);
   const loadingMore = useApp((state) => state.loadingMore);
   const refreshing = useApp((state) => state.refreshing);
@@ -107,13 +109,21 @@ export function Sidebar() {
         className="search"
         onSubmit={(event) => {
           event.preventDefault();
+          // A pasted thread link is an instruction to open it, not a search for
+          // its digits.
+          const item = parseItemRef(draft);
+          if (item !== null) {
+            setDraft("");
+            openItemRef(item);
+            return;
+          }
           runSearch(draft);
         }}
       >
         <input
           type="search"
           value={draft}
-          placeholder="Search Hacker News"
+          placeholder="Search, or paste a thread link"
           spellCheck={false}
           autoComplete="off"
           autoCorrect="off"

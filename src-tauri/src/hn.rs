@@ -502,3 +502,52 @@ mod tests {
         assert_eq!(built[0].subtree_size, 1);
     }
 }
+
+#[derive(Serialize, Debug, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct ItemRef {
+    pub story_id: u64,
+    /// Set when the id was a comment, so the reader lands on it rather than at
+    /// the top of a thread they were pointed into the middle of.
+    pub comment_id: Option<u64>,
+}
+
+/// Resolves whatever a Hacker News link points at to the story that holds it.
+///
+/// Stories and comments share the `item?id=` form, and a link someone shares is
+/// as often a comment as a story. A comment is walked up through `parent` until
+/// a story is reached.
+pub async fn resolve_item(id: u64) -> Result<ItemRef> {
+    #[derive(Deserialize)]
+    struct Node {
+        #[serde(rename = "type")]
+        kind: Option<String>,
+        parent: Option<u64>,
+    }
+
+    let mut current = id;
+    // Deep threads are legal; a cycle or a chain this long is not, and must not
+    // become an unbounded walk over the network.
+    for _ in 0..64 {
+        let node: Node = client()
+            .get(format!("{FIREBASE}/item/{current}.json"))
+            .send()
+            .await?
+            .json()
+            .await?;
+
+        match node.kind.as_deref() {
+            Some("story") | Some("job") | Some("poll") => {
+                return Ok(ItemRef {
+                    story_id: current,
+                    comment_id: (current != id).then_some(id),
+                });
+            }
+            _ => match node.parent {
+                Some(parent) => current = parent,
+                None => return Err(anyhow!("{id} is not part of a thread")),
+            },
+        }
+    }
+    Err(anyhow!("could not find the story holding {id}"))
+}
