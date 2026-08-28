@@ -11,8 +11,14 @@ export const isMac = platform() === "macos";
 /// would just be a gap under it.
 export const titleBarClearance = isMac ? "pt-9" : "pt-5";
 
+/// macOS writes keys as glyphs. Everywhere else spells them out.
+const SPELLED: Record<string, string> = { "⏎": "Enter" };
+
 /// Every shortcut in this app is bound to meta *or* control, so only the label
 /// changes.
 export function shortcut(key: string): string {
-  return isMac ? `⌘${key}` : `Ctrl+${key}`;
+  if (isMac) {
+    return `⌘${key}`;
+  }
+  return `Ctrl+${SPELLED[key] ?? key}`;
 }

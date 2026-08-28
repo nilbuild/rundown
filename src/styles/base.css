@@ -110,9 +110,12 @@ color-scheme: dark;
 }
 
 :root {
---ui: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
---serif: ui-serif, "New York", Charter, Georgia, serif;
---mono: ui-monospace, "SF Mono", Menlo, monospace;
+--ui: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Inter, Cantarell,
+  Ubuntu, "Noto Sans", sans-serif;
+--serif: ui-serif, "New York", Charter, "Iowan Old Style", Georgia, "Liberation Serif",
+  serif;
+--mono: ui-monospace, "SF Mono", Menlo, "Cascadia Mono", Consolas, "DejaVu Sans Mono",
+  monospace;
 
 --sidebar-w: 328px;
 --chat-w: 400px;
@@ -294,5 +297,38 @@ background: var(--line-soft);
     outline: 2px solid var(--accent);
     outline-offset: 1px;
     border-radius: 5px;
+  }
+}
+
+/* macOS draws overlay scrollbars: they float above the content, take no layout
+   space, and hide themselves. Windows and Linux draw a permanent one instead,
+   in the browser's own colours, so those two get a styled one. The attribute
+   is set in main.tsx; until it is, nothing here matches. */
+@layer base {
+  [data-platform="windows"] ::-webkit-scrollbar,
+  [data-platform="linux"] ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  [data-platform="windows"] ::-webkit-scrollbar-track,
+  [data-platform="linux"] ::-webkit-scrollbar-track,
+  [data-platform="windows"] ::-webkit-scrollbar-corner,
+  [data-platform="linux"] ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
+  [data-platform="windows"] ::-webkit-scrollbar-thumb,
+  [data-platform="linux"] ::-webkit-scrollbar-thumb {
+    background: var(--line);
+    border-radius: 6px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+
+  [data-platform="windows"] ::-webkit-scrollbar-thumb:hover,
+  [data-platform="linux"] ::-webkit-scrollbar-thumb:hover {
+    background: var(--muted);
+    background-clip: content-box;
   }
 }
