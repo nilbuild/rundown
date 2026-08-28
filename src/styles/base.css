@@ -9,7 +9,7 @@
 color-scheme: light;
 --bg: #f7f5f2;
 /* The rails sit under the page, not on it. */
---rail: #edeae3;
+--rail: #f2f0ed;
 --panel: #ffffff;
 --panel-2: #fbfaf8;
 --text: #1c1b1a;
@@ -35,7 +35,7 @@ color-scheme: light;
 color-scheme: light;
 --bg: #f2e9d8;
 /* The rails sit under the page, not on it. */
---rail: #e7dbc4;
+--rail: #efe6d5;
 --panel: #fbf5e8;
 --panel-2: #f6eedd;
 --text: #3b2f21;
@@ -294,32 +294,5 @@ background: var(--line-soft);
     outline: 2px solid var(--accent);
     outline-offset: 1px;
     border-radius: 5px;
-  }
-}
-
-@layer base {
-  ::-webkit-scrollbar {
-    width: 9px;
-    height: 9px;
-  }
-
-  /* The gutter is always reserved so nothing reflows, but the thumb only
-     appears once the pointer is over the pane it belongs to. */
-  ::-webkit-scrollbar-thumb {
-    background: transparent;
-    border-radius: 6px;
-    border: 2px solid transparent;
-    background-clip: content-box;
-    transition: background-color 140ms ease;
-  }
-
-  :hover::-webkit-scrollbar-thumb {
-    background: var(--line);
-    background-clip: content-box;
-  }
-
-  :hover::-webkit-scrollbar-thumb:hover {
-    background: var(--muted);
-    background-clip: content-box;
   }
 }
