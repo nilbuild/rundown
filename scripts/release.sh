@@ -27,7 +27,16 @@ if [ "$(git rev-parse HEAD)" != "$(git rev-parse origin/main)" ]; then
   exit 1
 fi
 
-CUR=$(gh api "repos/$REPO/releases/latest" -q .tag_name 2>/dev/null || echo "v0.0.0")
+# `gh api` prints the error body on stdout as well as exiting non-zero, so a
+# `|| echo` fallback would append to the JSON rather than replace it. Take the
+# output only when the call succeeded, and only when it looks like a version —
+# the first ever release has nothing to read.
+if ! CUR=$(gh api "repos/$REPO/releases/latest" -q .tag_name 2>/dev/null); then
+  CUR=""
+fi
+if ! printf '%s' "$CUR" | grep -Eq '^v?[0-9]+\.[0-9]+\.[0-9]+$'; then
+  CUR="0.0.0"
+fi
 CUR="${CUR#v}"
 
 NEW=$(python3 - "$CUR" "$BUMP" <<'PY'
@@ -43,6 +52,15 @@ PY
 )
 
 echo "Releasing v$NEW (was v$CUR)"
+
+# A build that failed leaves the tag behind but publishes no release, so the
+# next run computes the same version again. Say so rather than letting git
+# fail with its own wording.
+if git rev-parse -q --verify "refs/tags/v$NEW" >/dev/null; then
+  echo "v$NEW is already tagged. Delete it first if you are re-running a failed build:" >&2
+  echo "  git tag -d v$NEW && git push origin :refs/tags/v$NEW" >&2
+  exit 1
+fi
 
 # Annotate the tag with the notes so the workflow can read them back as the
 # release body.
