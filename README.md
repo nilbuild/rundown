@@ -3,9 +3,10 @@
   <h1>Rundown</h1>
   <p>A Hacker News client that summarises long threads and lets you chat with them.</p>
   <p>
-    <img alt="License" src="https://img.shields.io/badge/license-MIT-2f7d55" />
-    <img alt="Tauri" src="https://img.shields.io/badge/Tauri-2-c2521c" />
-    <img alt="Works with Claude and Codex" src="https://img.shields.io/badge/Claude%20%7C%20Codex-CLI-1c1b1a" />
+    <a href="https://github.com/nilbuild/rundown/releases/latest"><img alt="Download for macOS" src="https://img.shields.io/badge/macOS-1c1b1a?logo=apple&logoColor=white" /></a>
+    <a href="https://github.com/nilbuild/rundown/releases/latest"><img alt="Download for Windows" src="https://img.shields.io/badge/Windows-1c1b1a?logo=windows&logoColor=white" /></a>
+    <a href="https://github.com/nilbuild/rundown/releases/latest"><img alt="Download for Linux" src="https://img.shields.io/badge/Linux-1c1b1a?logo=linux&logoColor=white" /></a>
+    <a href="LICENSE"><img alt="MIT licence" src="https://img.shields.io/badge/license-MIT-2f7d55" /></a>
   </p>
   <img src=".github/screenshot.png" alt="A thread open in Rundown, with the briefing in the middle and a chat about it on the right" width="900" />
 </div>
