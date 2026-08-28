@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useApp } from "~/stores/app";
 import type { FeedName } from "~/lib/api/reading";
 import { cn } from "~/utils/classname";
+import { shortcut } from "~/utils/platform";
 
 interface Command {
   id: string;
@@ -40,7 +41,7 @@ export function CommandPalette() {
       {
         id: "digest",
         label: "Digest this thread",
-        hint: "⌘D",
+        hint: shortcut("D"),
         run: () => {
           setTab("digest");
           runOutput("digest");
@@ -57,7 +58,7 @@ export function CommandPalette() {
       { id: "chat-reset", label: "Clear this conversation", run: () => resetChat() },
       { id: "collapse", label: "Collapse all comments", run: () => collapseAll() },
       { id: "expand", label: "Expand all comments", run: () => expandAll() },
-      { id: "reload", label: "Reload this thread", hint: "⌘R", run: () => reloadStory() },
+      { id: "reload", label: "Reload this thread", hint: shortcut("R"), run: () => reloadStory() },
       {
         id: "prefetch",
         label: prefetch === "off" ? "Generate briefings early" : "Stop generating early",
@@ -66,7 +67,7 @@ export function CommandPalette() {
       {
         id: "library",
         label: "Search everything you have read",
-        hint: "⌘L",
+        hint: shortcut("L"),
         run: () => setLibraryOpen(true),
       },
       {
@@ -74,8 +75,8 @@ export function CommandPalette() {
         label: "Read several threads together",
         run: () => useApp.getState().setView("synthesis"),
       },
-      { id: "presets", label: "Presets", hint: "⌘P", run: () => setPresetsOpen(true) },
-      { id: "settings", label: "Settings", hint: "⌘,", run: () => setSettingsOpen(true) },
+      { id: "presets", label: "Presets", hint: shortcut("P"), run: () => setPresetsOpen(true) },
+      { id: "settings", label: "Settings", hint: shortcut(","), run: () => setSettingsOpen(true) },
     ];
 
     feeds.forEach((feed) => {

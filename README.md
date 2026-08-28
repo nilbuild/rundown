@@ -31,8 +31,9 @@ subscription you are signed in to. Nothing is stored anywhere but your own machi
 
 ## Install
 
-[Download the latest release](https://github.com/nilbuild/rundown/releases/latest)
-— one universal `.dmg` for Apple Silicon and Intel. It updates itself after that.
+[Download the latest release](https://github.com/nilbuild/rundown/releases/latest) —
+a universal `.dmg` on macOS, an installer on Windows, `.AppImage` or `.deb` on Linux.
+It updates itself after that.
 
 Needs [Claude Code](https://claude.com/claude-code) or the
 [Codex CLI](https://developers.openai.com/codex/cli) installed and signed in.

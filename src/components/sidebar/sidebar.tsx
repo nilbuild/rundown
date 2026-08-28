@@ -10,6 +10,7 @@ import { RotateCw, X } from "lucide-react";
 import { cn } from "~/utils/classname";
 import { useInfiniteScroll } from "~/hooks/use-infinite-scroll";
 import { useStoryKeys } from "~/hooks/use-story-keys";
+import { isMac } from "~/utils/platform";
 
 const FEEDS: { key: FeedName; label: string }[] = [
   { key: "top", label: "Top" },
@@ -59,9 +60,10 @@ export function Sidebar() {
 
   return (
     <aside className="flex min-h-0 flex-col border-r border-line bg-rail">
-      {/* Nothing but clearance for the traffic lights, and somewhere to grab
-          the window. The app's name is already in the menu bar. */}
-      <div className="h-9" data-tauri-drag-region />
+      {/* Clearance for the traffic lights, and somewhere to grab the window.
+          Only macOS floats them over the content; elsewhere the native title
+          bar is already there and this would be a gap under it. */}
+      {isMac ? <div className="h-9" data-tauri-drag-region /> : null}
 
       <form
         className="relative px-3 pt-0.5 pb-2.5"

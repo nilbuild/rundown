@@ -12,6 +12,7 @@
     "window-state:default",
     "core:window:allow-start-dragging",
     "updater:default",
-    "process:allow-restart"
+    "process:allow-restart",
+    "os:default"
   ]
 }

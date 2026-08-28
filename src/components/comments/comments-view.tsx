@@ -5,6 +5,7 @@ import { GhostButton } from "~/components/ui/ghost-button";
 import { IconButton } from "~/components/ui/icon-button";
 import { CommentRow } from "~/components/comments/comment-row";
 import { useJumpToComment } from "~/hooks/use-jump-to-comment";
+import { shortcut } from "~/utils/platform";
 
 export function CommentsView() {
   const thread = useApp((state) => state.thread);
@@ -156,7 +157,7 @@ export function CommentsView() {
             <GhostButton
              
              
-              title="Find in thread (⌘F)"
+              title={`Find in thread (${shortcut("F")})`}
               onClick={() => setSearchOpen(true)}
             >
               Find

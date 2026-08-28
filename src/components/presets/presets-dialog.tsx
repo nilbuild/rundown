@@ -6,6 +6,7 @@ import { GhostButton } from "~/components/ui/ghost-button";
 import { IconButton } from "~/components/ui/icon-button";
 import { PrimaryButton } from "~/components/ui/primary-button";
 import { cn } from "~/utils/classname";
+import { shortcut } from "~/utils/platform";
 
 export function PresetsDialog() {
   const open = useApp((state) => state.presetsOpen);
@@ -188,7 +189,7 @@ export function PresetsDialog() {
                 onClick={commitNew} small>
                 Add preset
               </PrimaryButton>
-              <span className="text-xs leading-[1.5] text-muted">⌘⏎ to add</span>
+              <span className="text-xs leading-[1.5] text-muted">{shortcut("⏎")} to add</span>
             </div>
           </div>
     </Dialog>

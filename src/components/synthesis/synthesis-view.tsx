@@ -14,6 +14,7 @@ import { IconButton } from "~/components/ui/icon-button";
 import { LinkButton } from "~/components/ui/link-button";
 import { PrimaryButton } from "~/components/ui/primary-button";
 import { cn } from "~/utils/classname";
+import { titleBarClearance } from "~/utils/platform";
 
 export function SynthesisView() {
   const text = useApp((state) => state.synthesisText);
@@ -39,7 +40,7 @@ export function SynthesisView() {
 
   return (
     <main className="flex min-h-0 min-w-0 flex-col bg-panel">
-      <header className="border-b border-line-soft px-8 pt-9" data-tauri-drag-region>
+      <header className={cn("border-b border-line-soft px-8", titleBarClearance)} data-tauri-drag-region>
         <h1 className="mb-1.5 cursor-default text-[17px] leading-[1.35] font-semibold tracking-[-0.012em]" data-tauri-drag-region>
           Read together
         </h1>

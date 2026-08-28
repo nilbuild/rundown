@@ -29,13 +29,10 @@
   },
   "bundle": {
     "active": true,
-    "targets": [
-      "app",
-      "dmg"
-    ],
+    "targets": "all",
     "category": "News",
     "shortDescription": "An AI-native Hacker News client",
-    "longDescription": "Read Hacker News threads, get grounded digests of what people actually argued, and ask follow-up questions using the Claude or Codex CLI already installed on your Mac.",
+    "longDescription": "Read Hacker News threads, get grounded digests of what people actually argued, and ask follow-up questions using the Claude or Codex CLI already installed on your machine.",
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
@@ -46,7 +43,15 @@
     "macOS": {
       "minimumSystemVersion": "13.0"
     },
-    "createUpdaterArtifacts": true
+    "createUpdaterArtifacts": true,
+    "linux": {
+      "deb": {
+        "depends": [
+          "libwebkit2gtk-4.1-0",
+          "libgtk-3-0"
+        ]
+      }
+    }
   },
   "plugins": {
     "updater": {

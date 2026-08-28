@@ -9,6 +9,7 @@ import type { ModelSlot, PrefetchMode, Provider } from "~/lib/api/settings";
 import { GhostButton } from "~/components/ui/ghost-button";
 import { LinkButton } from "~/components/ui/link-button";
 import { ThemePicker } from "~/components/settings/theme-picker";
+import { shortcut } from "~/utils/platform";
 
 const SLOTS: { slot: ModelSlot; label: string; hint: string }[] = [
   { slot: "rundown", label: "Briefing", hint: "The thread summary — worth the deepest model" },
@@ -166,7 +167,7 @@ export function Settings() {
                 setPresetsOpen(true);
               }}
             >
-              Open presets… ⌘P
+              Open presets… {shortcut("P")}
             </GhostButton>
           </div>
         </section>

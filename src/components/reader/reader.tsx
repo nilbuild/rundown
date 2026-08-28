@@ -7,6 +7,7 @@ import { RundownView } from "~/components/rundown/rundown-view";
 import { openExternal } from "~/lib/api/shell";
 import { CommentsSkeleton } from "~/components/ui/comments-skeleton";
 import { cn } from "~/utils/classname";
+import { shortcut, titleBarClearance } from "~/utils/platform";
 import { ErrorState } from "~/components/ui/error-state";
 import { compact, hnLink, timeAgo } from "~/utils/format";
 import type { Tab } from "~/stores/app";
@@ -117,7 +118,7 @@ export function Reader() {
     return (
       <main className="flex min-h-0 min-w-0 flex-col bg-panel">
         {notice}
-        <header className="border-b border-line-soft px-8 pt-9 pb-[26px]" data-tauri-drag-region>
+        <header className={cn("border-b border-line-soft px-8 pb-[26px]", titleBarClearance)} data-tauri-drag-region>
           <div className="skeleton" style={{ width: "52%", height: 17 }} data-tauri-drag-region />
           <div
             className="skeleton"
@@ -157,7 +158,7 @@ export function Reader() {
             Read it, or have it read for you. Every quote is checked against the comment it
             came from.
           </p>
-          <p className="text-xs leading-[1.5] text-muted">⌘K for the command palette · j and k move through the list</p>
+          <p className="text-xs leading-[1.5] text-muted">{shortcut("K")} for the command palette · j and k move through the list</p>
         </div>
       </main>
     );
@@ -166,7 +167,7 @@ export function Reader() {
   return (
     <main className="flex min-h-0 min-w-0 flex-col bg-panel">
       {notice}
-      <header className="border-b border-line-soft px-8 pt-9" data-tauri-drag-region>
+      <header className={cn("border-b border-line-soft px-8", titleBarClearance)} data-tauri-drag-region>
         {/* The title is the window's drag handle, as it would be on any Mac
             window. Opening the discussion moved to an explicit control below. */}
         <h1

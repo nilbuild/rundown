@@ -14,9 +14,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # macOS only, deliberately. The window uses an overlay title bar and the
-  # sidebar reserves space for the traffic lights, so a Linux or Windows build
-  # would produce something shipped but broken.
+  # macOS goes first and alone. It creates the release and the first latest.json;
+  # the other two merge their signatures into it rather than racing to create it.
   build-macos:
     permissions:
       contents: write
@@ -63,7 +62,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          DEFAULT='Download the universal .dmg — it runs on Apple Silicon and Intel. The app updates itself after that.'
+          DEFAULT='macOS: the universal .dmg runs on Apple Silicon and Intel. Windows: the .exe installer. Linux: .AppImage or .deb. The app updates itself after that.'
           BODY=""
           TYPE=$(gh api "repos/${{ github.repository }}/git/refs/tags/${{ github.ref_name }}" -q .object.type 2>/dev/null || true)
           OBJ=$(gh api "repos/${{ github.repository }}/git/refs/tags/${{ github.ref_name }}" -q .object.sha 2>/dev/null || true)
@@ -102,3 +101,108 @@ jobs:
           releaseDraft: false
           prerelease: false
           args: --target universal-apple-darwin
+
+  build-linux:
+    permissions:
+      contents: write
+    runs-on: ubuntu-22.04
+    timeout-minutes: 90
+    needs: build-macos
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri -> target
+          key: linux
+
+      # webkit2gtk is the webview; the rest are what the AppImage and .deb
+      # bundlers shell out to.
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            librsvg2-dev \
+            patchelf \
+            build-essential \
+            file \
+            libssl-dev \
+            libgtk-3-dev \
+            libxdo-dev \
+            libayatana-appindicator3-dev
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Stamp version from tag
+        run: |
+          VER="${GITHUB_REF_NAME#v}"
+          python3 -c "import json,sys; p='src-tauri/tauri.conf.json'; d=json.load(open(p)); d['version']=sys.argv[1]; json.dump(d,open(p,'w'),indent=2)" "$VER"
+
+      - uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          tauriScript: pnpm exec tauri
+          tagName: ${{ github.ref_name }}
+          releaseName: ${{ github.ref_name }}
+          releaseDraft: false
+          prerelease: false
+
+  build-windows:
+    permissions:
+      contents: write
+    runs-on: windows-2022
+    timeout-minutes: 90
+    needs: build-macos
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri -> target
+          key: windows
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Stamp version from tag
+        shell: pwsh
+        run: |
+          $VER = $env:GITHUB_REF_NAME -replace '^v',''
+          python -c "import json,sys; p='src-tauri/tauri.conf.json'; d=json.load(open(p)); d['version']=sys.argv[1]; json.dump(d,open(p,'w'),indent=2)" $VER
+
+      - uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          tauriScript: pnpm exec tauri
+          tagName: ${{ github.ref_name }}
+          releaseName: ${{ github.ref_name }}
+          releaseDraft: false
+          prerelease: false

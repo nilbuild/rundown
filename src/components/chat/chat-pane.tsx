@@ -12,6 +12,7 @@ import { IconButton } from "~/components/ui/icon-button";
 import { PrimaryButton } from "~/components/ui/primary-button";
 import { cn } from "~/utils/classname";
 import { usePinnedScroll } from "~/hooks/use-pinned-scroll";
+import { shortcut } from "~/utils/platform";
 
 export function ChatPane() {
   const thread = useApp((state) => state.thread);
@@ -134,7 +135,7 @@ export function ChatPane() {
             Clear
           </GhostButton>
         ) : null}
-        <Tooltip label="Hide the chat pane (⌘\\)">
+        <Tooltip label={`Hide the chat pane (${shortcut("\\")})`}>
           <IconButton
            
            
