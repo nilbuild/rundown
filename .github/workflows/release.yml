@@ -102,6 +102,29 @@ jobs:
           prerelease: false
           args: --target universal-apple-darwin
 
+      # Tauri notarizes and staples the .app, then builds the .dmg around it and
+      # only signs that. Gatekeeper assesses the disk image when the reader opens
+      # the download, and an unnotarized one is rejected, so the container has to
+      # be notarized too. Safe to re-upload: the updater signs the .tar.gz, not
+      # the .dmg.
+      - name: Notarize the disk image
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ -z "$APPLE_ID" ]; then
+            echo "No Apple credentials; the .dmg stays unnotarized." >&2
+            exit 0
+          fi
+          DMG=$(ls src-tauri/target/universal-apple-darwin/release/bundle/dmg/*.dmg)
+          xcrun notarytool submit "$DMG" \
+            --apple-id "$APPLE_ID" --password "$APPLE_PASSWORD" --team-id "$APPLE_TEAM_ID" --wait
+          xcrun stapler staple "$DMG"
+          spctl -a -t open --context context:primary-signature -vv "$DMG"
+          gh release upload "$GITHUB_REF_NAME" "$DMG" --repo "$GITHUB_REPOSITORY" --clobber
+
   build-linux:
     permissions:
       contents: write

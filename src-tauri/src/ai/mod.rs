@@ -9,8 +9,10 @@
 mod claude;
 mod codex;
 mod command;
+mod path;
 mod registry;
 
+pub use path::warm as warm_search_path;
 pub use registry::Registry;
 
 use claude::handle_claude_event;
@@ -111,7 +113,7 @@ pub async fn run(
     spec: RunSpec,
 ) -> Result<RunOutcome> {
     let started = std::time::Instant::now();
-    let mut cmd = build_command(&spec);
+    let mut cmd = build_command(&spec).await;
 
     let mut child = cmd.spawn().map_err(|err| {
         anyhow!(
@@ -252,6 +254,7 @@ fn emit(app: &AppHandle, event: AiEvent) {
 /// Check whether the provider CLIs are actually available.
 pub async fn probe(provider: Provider) -> Option<String> {
     let output = Command::new(provider.binary())
+        .env("PATH", path::search_path().await)
         .arg("--version")
         .stdout(Stdio::piped())
         .stderr(Stdio::null())

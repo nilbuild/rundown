@@ -39,6 +39,8 @@ pub fn run() {
         .plugin(tauri_plugin_window_state::Builder::default().build())
         .manage(Registry::default())
         .setup(|app| {
+            // Before anything can ask whether a CLI is installed.
+            tauri::async_runtime::spawn(ai::warm_search_path());
             let store = Store::open()?;
             commands::library::backfill_library(&store);
             app.manage(store);

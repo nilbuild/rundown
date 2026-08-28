@@ -9,8 +9,11 @@ pub(super) fn workdir() -> std::path::PathBuf {
     base
 }
 
-pub(super) fn build_command(spec: &RunSpec) -> Command {
+pub(super) async fn build_command(spec: &RunSpec) -> Command {
     let mut cmd = Command::new(spec.provider.binary());
+    // Launched from the Dock there is no shell PATH to inherit, so the app
+    // supplies one it worked out itself.
+    cmd.env("PATH", super::path::search_path().await);
     cmd.current_dir(workdir());
 
     match spec.provider {
