@@ -58,7 +58,7 @@ export function Sidebar() {
   useStoryKeys(stories, selectedId, selectStory);
 
   return (
-    <aside className="flex min-h-0 flex-col border-r border-line bg-panel-2">
+    <aside className="flex min-h-0 flex-col border-r border-line bg-rail">
       {/* Nothing but clearance for the traffic lights, and somewhere to grab
           the window. The app's name is already in the menu bar. */}
       <div className="h-9" data-tauri-drag-region />

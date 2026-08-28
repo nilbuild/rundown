@@ -106,7 +106,7 @@ export function ChatPane() {
   };
 
   return (
-    <section className="flex min-h-0 flex-col border-l border-line bg-panel-2">
+    <section className="flex min-h-0 flex-col border-l border-line bg-rail">
       <header
         className="flex h-16 items-center gap-2 border-b border-line-soft pr-2.5 pl-3.5"
         data-tauri-drag-region

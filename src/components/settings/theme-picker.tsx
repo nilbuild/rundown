@@ -27,9 +27,9 @@ export function ThemePicker() {
                 itself from the same tokens the app would use. */}
             <span
               data-theme={entry.id === "system" ? palette : entry.id}
-              className="flex h-9 w-14 overflow-hidden rounded-[5px] border border-line bg-bg"
+              className="flex h-9 w-14 overflow-hidden rounded-[5px] border border-line bg-panel"
             >
-              <span className="h-full w-1/3 border-r border-line bg-panel" />
+              <span className="h-full w-1/3 border-r border-line bg-rail" />
               <span className="flex flex-1 flex-col justify-center gap-1 px-1.5">
                 <span className="h-[3px] rounded-full bg-accent" />
                 <span className="h-[3px] w-3/4 rounded-full bg-line" />
